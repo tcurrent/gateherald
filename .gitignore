@@ -1,0 +1,4 @@
+config.js
+node_modules
+.bash_history
+*.db
