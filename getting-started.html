@@ -35,9 +35,16 @@
 <li>npm</li>
 </ul>
 <h2 id="installation">Installation</h2>
-<pre><code class="language-bash">npm install
-</code></pre>
-<p>Create <code>.env.development</code> from <code>.env.development.example</code>, then adjust values for your machine.</p>
+<ol>
+<li><p>Create <code>.env.development</code> from <code>.env.development.example</code>, then adjust values for your machine.</p>
+</li>
+<li><p>Run the following:</p>
+<ul>
+<li><code>npm install</code></li>
+</ul>
+<p> Note: <code>.env.development</code> is ignored by git. Keep real secrets there and commit only the example files.</p>
+</li>
+</ol>
 <h2 id="run-commands">Run Commands</h2>
 <pre><code class="language-bash">npm start               # NODE_ENV=development, loads .env.development
 npm run start:prod      # NODE_ENV=production, loads .env.production
