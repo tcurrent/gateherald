@@ -11,23 +11,20 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -41,21 +38,32 @@ jobs:
       - name: Build Docs Site
         run: node scripts/build-docs-pages.js
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v6
+      - name: Publish To gh-pages Branch
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: .site
+          PUBLISH_DIR="${RUNNER_TEMP}/gh-pages"
+          git fetch origin gh-pages || true
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy To GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git worktree add "$PUBLISH_DIR" refs/remotes/origin/gh-pages
+          else
+            git worktree add -B gh-pages "$PUBLISH_DIR"
+          fi
+
+          rsync -av --delete .site/ "$PUBLISH_DIR"/
+          touch "$PUBLISH_DIR/.nojekyll"
+
+          cd "$PUBLISH_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add --all
+          if git diff --cached --quiet; then
+            echo "No docs changes to publish"
+            exit 0
+          fi
+
+          git commit -m "Deploy docs for ${GITHUB_SHA}"
+          git push origin HEAD:gh-pages
