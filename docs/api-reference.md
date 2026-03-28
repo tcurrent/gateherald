@@ -40,4 +40,6 @@ If you run the app directly in local development (no reverse proxy header inject
 
 ## Webhook Ingress
 
-- `ALL /webhook/:routeId`
+- `ALL /webhook/*`
+
+Configured paths can include multiple segments (for example `/webhook/sample/01J0Z8X3GWBD9117Q9H4M2KCFP`).

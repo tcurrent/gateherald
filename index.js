@@ -761,7 +761,7 @@ const resolveHeaderValue = (value) => {
   return process.env[envKey] || '';
 };
 
-app.all(`${webhookPathPrefix}:routeId`, async (req, res) => {
+app.all(`${webhookPathPrefix}*routePath`, async (req, res) => {
   const route = routeConfigIndex.get(routeCacheKey(req.path, req.method));
 
   if (!route) {
