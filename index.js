@@ -45,6 +45,7 @@ const forwardRequestTimeoutMs = parsePositiveInteger(process.env.FORWARD_REQUEST
 const forwardMaxConcurrent = parsePositiveInteger(process.env.FORWARD_MAX_CONCURRENT, 20);
 const forwardQueueWarnThreshold = parsePositiveInteger(process.env.FORWARD_QUEUE_WARN_THRESHOLD, 250);
 const frontendAuthSessionTtlMinutes = parsePositiveInteger(process.env.FRONTEND_AUTH_SESSION_TTL_MINUTES, 480);
+const debugTransformedPayload = process.env.DEBUG_TRANSFORMED_PAYLOAD === 'true';
 
 const parseCookies = (cookieHeader = '') => {
   const cookieMap = {};
@@ -670,16 +671,13 @@ function forwardRequest(targetUrl, method, headers, body, requestId) {
     const options = {
       hostname: parsedUrl.hostname,
       port: parsedUrl.port || (isHttps ? 443 : 80),
-      path: parsedUrl.path,
+      path: `${parsedUrl.pathname}${parsedUrl.search}`,
       method: method,
       headers: headers
     };
 
     const req = client.request(options, (res) => {
-      let responseData = '';
-      res.on('data', (chunk) => {
-        responseData += chunk;
-      });
+      res.on('data', () => {});
       res.on('end', async () => {
         try {
           await Egress.create({
@@ -800,7 +798,9 @@ app.all(`${webhookPathPrefix}:routeId`, async (req, res) => {
       });
       if (transformed) {
         bodyToForward = Buffer.from(JSON.stringify(transformed));
-        console.log('Transformed payload:', JSON.stringify(transformed, null, 2));
+        if (debugTransformedPayload) {
+          console.log('Transformed payload:', JSON.stringify(transformed, null, 2));
+        }
       }
     }
 
