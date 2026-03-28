@@ -6,3 +6,8 @@ node_modules
 .vscode
 .site
 
+# Local smoke-test artifacts
+server.out.log
+server.err.log
+webhook.out
+

@@ -31,38 +31,6 @@ jobs:
       - name: Build Docs
         run: npm run build:docs
 
-      - name: Seed Sample Data
-        run: npm run db:seed
-
-      - name: Smoke Start Server And Webhook Route
+      - name: Smoke E2E
         shell: bash
-        run: |
-          set -euo pipefail
-          npm start > server.log 2>&1 &
-          SERVER_PID=$!
-
-          cleanup() {
-            if kill -0 "$SERVER_PID" 2>/dev/null; then
-              kill "$SERVER_PID" 2>/dev/null || true
-              wait "$SERVER_PID" 2>/dev/null || true
-            fi
-            cat server.log
-          }
-          trap cleanup EXIT
-
-          for _ in {1..30}; do
-            if curl -sf "http://localhost:3000/api" >/dev/null; then
-              break
-            fi
-            sleep 1
-          done
-
-          curl -sf "http://localhost:3000/api" >/dev/null
-
-          webhook_response="$(curl -s -o /tmp/webhook.out -w "%{http_code}" \
-            -X POST "http://localhost:3000/webhook/sample/01J0Z8X3GWBD9117Q9H4M2KCFP" \
-            -H "Content-Type: application/json" \
-            --data-raw '{"name":"CI Alert","timestamp":"2026-03-28T10:00:00Z","host":"ci-host","description":"smoke"}')"
-
-          test "$webhook_response" = "200"
-          grep -q "Picked up by Herald at the Gate" /tmp/webhook.out
+        run: bash scripts/smoke-e2e.sh
