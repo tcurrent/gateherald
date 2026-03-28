@@ -26,3 +26,7 @@ npm run db:reset        # Delete DB, then run migrations + seed scripts
 npm run build:docs      # Local docs build
 npx serve .site         # Preview local docs after build (include -l flag and port if needed)
 ```
+
+## License
+
+Licensed under the MIT License. See `LICENSE`.

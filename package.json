@@ -1,7 +1,7 @@
 {
   "name": "gateherald",
   "version": "1.0.0",
-  "description": "",
+  "description": "A webhook gateway that receives inbound events, transforms payloads through a template-driven mapper, and forwards to one or more target endpoints.",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
