@@ -44,6 +44,11 @@ jobs:
           set -euo pipefail
 
           PUBLISH_DIR="${RUNNER_TEMP}/gh-pages"
+
+          # Clean up stale worktree path from prior attempts.
+          git worktree remove --force "$PUBLISH_DIR" 2>/dev/null || true
+          rm -rf "$PUBLISH_DIR"
+
           git fetch origin gh-pages || true
 
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
@@ -52,7 +57,8 @@ jobs:
             git worktree add -B gh-pages "$PUBLISH_DIR"
           fi
 
-          rsync -av --delete .site/ "$PUBLISH_DIR"/
+          # Keep worktree git metadata intact.
+          rsync -av --delete --exclude='.git' .site/ "$PUBLISH_DIR"/
           touch "$PUBLISH_DIR/.nojekyll"
 
           cd "$PUBLISH_DIR"
