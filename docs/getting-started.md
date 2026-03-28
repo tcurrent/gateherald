@@ -19,6 +19,8 @@
 npm install
 ```
 
+Create `.env.development` from `.env.development.example`, then adjust values for your machine.
+
 ## Run Commands
 
 ```bash
@@ -49,6 +51,7 @@ Core variables:
 - `FRONTEND_AUTH_SESSION_TTL_MINUTES` (default: `480`)
 - `ADMIN_API_TOKEN` (optional; protects admin APIs with Bearer auth or `X-Gateherald-Admin-Token`)
 - `ADMIN_PROXY_SHARED_SECRET` (required when `FRONTEND_ONLY_API=true`; protects APIs via `X-Gateherald-Proxy-Secret` from a trusted reverse proxy)
+- `DEBUG_TRANSFORMED_PAYLOAD` (default: `false`; when `true`, logs transformed webhook payloads for local debugging)
 - `FORWARD_REQUEST_TIMEOUT_MS` (default: `15000`)
 - `FORWARD_MAX_CONCURRENT` (default: `20`)
 - `FORWARD_QUEUE_WARN_THRESHOLD` (default: `250`)

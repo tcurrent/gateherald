@@ -11,8 +11,11 @@ Gateherald is a webhook gateway that receives inbound events, transforms payload
 
 ```bash
 npm install
+copy .env.development.example .env.development
 npm start
 ```
+
+`.env.development` is ignored by git. Keep real secrets there and commit only the example files.
 
 ## Core Commands
 
