@@ -5,8 +5,8 @@ import dotenv from 'dotenv';
 import express from 'express';
 import http from 'http';
 import https from 'https';
-import { validateRoutesConfig } from './logic/shared/validateConfig.js';
-import { getTemplateCatalog, replaceTemplateRegistry } from './logic/templates/index.js';
+import { validateRoutesConfig } from './logic/validateConfig.js';
+import { getTemplateCatalog, replaceTemplateRegistry } from './logic/templateRegistry.js';
 import { sequelize, Ingress, Egress, Template, RouteConfig } from './models/index.js';
 import { runMigrations } from './models/db-config.js';
 

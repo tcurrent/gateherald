@@ -4,7 +4,7 @@ import {
   getTemplateDocumentationTargetField,
   getTemplateCatalog,
   listTemplates
-} from '../templates/index.js';
+} from './templateRegistry.js';
 
 const templateAwareModules = new Set(['TemplateDriver']);
 

@@ -3,12 +3,12 @@ import {
   getTemplateFieldSet,
   getTemplateEditableFieldSet,
   getTemplateDocumentationTargetField
-} from './templates/index.js';
+} from './templateRegistry.js';
 import {
   buildFromTemplate,
   mapFields,
   filterFieldMapByAllowedTargets
-} from './shared/templateMapper.js';
+} from './templateMapper.js';
 
 const moduleName = 'TemplateDriver';
 
