@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Prepare Development Env
+        run: cp .env.development.example .env.development
+
+      - name: Build CSS
+        run: npm run build:css
+
+      - name: Build Docs
+        run: npm run build:docs
+
+      - name: Smoke Start Server
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          status=0
+          timeout 20s npm start > server.log 2>&1 || status=$?
+          cat server.log
+
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            exit "$status"
+          fi
+
+          grep -q "Webhook proxy server running on port" server.log
