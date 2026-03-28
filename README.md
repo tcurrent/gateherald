@@ -9,13 +9,12 @@ Gateherald is a webhook gateway that receives inbound events, transforms payload
 
 ## Quick Start
 
-```bash
-npm install
-copy .env.development.example .env.development
-npm start
-```
-
-`.env.development` is ignored by git. Keep real secrets there and commit only the example files.
+1. Create `.env.development` from `.env.development.example`.
+2. Run the following:
+    - `npm install`
+    - `npm start`
+    
+    Note: `.env.development` is ignored by git. Keep real secrets there and commit only the example files.
 
 ## Core Commands
 

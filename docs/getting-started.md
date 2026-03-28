@@ -15,11 +15,11 @@
 
 ## Installation
 
-```bash
-npm install
-```
-
-Create `.env.development` from `.env.development.example`, then adjust values for your machine.
+1. Create `.env.development` from `.env.development.example`, then adjust values for your machine.
+2. Run the following:
+    - `npm install`
+    
+    Note: `.env.development` is ignored by git. Keep real secrets there and commit only the example files.
 
 ## Run Commands
 
