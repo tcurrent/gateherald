@@ -1,13 +1,11 @@
 # Gateherald
 
-Gateherald is a webhook gateway that accepts inbound webhook events, transforms payloads with a template-driven mapper, and forwards results to one or more downstream endpoints.
+Gateherald is a webhook gateway that receives inbound events, transforms payloads through a template-driven mapper, and forwards to one or more target endpoints. 
 
-[![Gateherald Docs](https://img.shields.io/badge/docs-github%20pages-0f766e)](https://tcurrent.github.io/gateherald/)
+## Documentation
 
-It includes:
-- A backend API and webhook runtime (Express + Sequelize)
-- A route configuration builder UI
-- A template builder UI
+- [Gateherald Docs](https://tcurrent.github.io/gateherald/)
+- Source: `docs/`
 
 ## Quick Start
 
@@ -15,33 +13,6 @@ It includes:
 npm install
 npm start
 ```
-
-## Docs
-
-- Live docs: https://tcurrent.github.io/gateherald/
-- Docs source: `docs/`
-
-See these primary guides:
-- `docs/getting-started.md`
-- `docs/api-reference.md`
-- `docs/troubleshooting.md`
-- `docs/deployment.md`
-
-### Publish Docs To GitHub Pages
-
-This repository includes a workflow at `.github/workflows/deploy-docs-pages.yml` that builds markdown files in `docs/` into a static site and deploys to GitHub Pages.
-
-1. Push to `main`.
-2. In GitHub repo settings, open Pages and set Source to GitHub Actions.
-3. Your docs site will be published from the workflow artifact.
-
-Local preview build:
-
-```bash
-npm run build:docs
-```
-
-Generated files are written to `.site/`.
 
 ## Core Commands
 
