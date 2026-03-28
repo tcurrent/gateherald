@@ -30,7 +30,7 @@ It includes:
 
 - [Getting Started](getting-started.md)
 - [API Reference](api-reference.md)
-- [Troubleshooting](troubleshooting.md)
 - [Deployment](deployment.md)
 - [Nginx Config Notes](nginx.md)
 - [Database In Production](database-production.md)
+- [Troubleshooting](troubleshooting.md)
