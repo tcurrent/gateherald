@@ -19,8 +19,9 @@ npm start
 ```bash
 npm start          # NODE_ENV=development, loads .env.development
 npm run start:prod # NODE_ENV=production, loads .env.production
-npm run build:css  # build ui/dist/styles.css from ui/styles.css
-npm run db:migrate # run migration scripts
-npm run db:seed    # run migrations + seed scripts
-npm run db:reset   # delete DB, then run migrations + seed scripts
+npm run build:css  # Build ui/dist/styles.css from ui/styles.css
+npm run db:migrate # Run migration scripts
+npm run db:seed    # Run migrations + seed scripts
+npm run db:reset   # Delete DB, then run migrations + seed scripts
+npm run build:docs # Local docs preview
 ```
