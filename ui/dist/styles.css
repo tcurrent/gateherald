@@ -1023,6 +1023,10 @@
     border-color: #2a2a2a;
     padding: calc(var(--spacing) * 3.5);
   }
+  .docs-section-body {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 0px;
+  }
   .auth-card {
     margin-inline: auto;
     width: 100%;

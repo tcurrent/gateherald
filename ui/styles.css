@@ -270,6 +270,10 @@
     @apply border-t border-line p-3.5;
   }
 
+  .docs-section-body {
+    @apply border-t-0;
+  }
+
   .auth-card {
     @apply mx-auto w-full max-w-md;
   }

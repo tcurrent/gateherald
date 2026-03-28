@@ -123,7 +123,7 @@ const pageTemplate = ({ pageTitle, navItems, activeSlug, contentHtml }) => {
     </nav>
 
     <section class="section-card" aria-live="polite">
-      <div class="section-body">
+      <div class="section-body docs-section-body">
         <div class="markdown-content">${contentHtml}</div>
       </div>
     </section>

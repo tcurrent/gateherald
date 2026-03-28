@@ -17,11 +17,12 @@ npm start
 ## Core Commands
 
 ```bash
-npm start          # NODE_ENV=development, loads .env.development
-npm run start:prod # NODE_ENV=production, loads .env.production
-npm run build:css  # Build ui/dist/styles.css from ui/styles.css
-npm run db:migrate # Run migration scripts
-npm run db:seed    # Run migrations + seed scripts
-npm run db:reset   # Delete DB, then run migrations + seed scripts
-npm run build:docs # Local docs preview
+npm start               # NODE_ENV=development, loads .env.development
+npm run start:prod      # NODE_ENV=production, loads .env.production
+npm run build:css       # Build ui/dist/styles.css from ui/styles.css
+npm run db:migrate      # Run migration scripts
+npm run db:seed         # Run migrations + seed scripts
+npm run db:reset        # Delete DB, then run migrations + seed scripts
+npm run build:docs      # Local docs build
+npx serve .site         # Preview local docs after build (include -l flag and port if needed)
 ```
