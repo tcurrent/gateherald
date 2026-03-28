@@ -1,0 +1,1 @@
+window.GATEHERALD_API_BASE_URL = window.GATEHERALD_API_BASE_URL || '';

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gateherald · Sign In</title>
+  <link rel="stylesheet" href="/ui/dist/styles.css" />
+</head>
+<body class="app-body">
+  <main class="app-shell">
+    <section class="app-brand" aria-label="Gateherald">
+      <p class="app-brand-title">Gateherald</p>
+      <p class="app-brand-kicker">Webhook Gateway</p>
+    </section>
+
+    <section class="section-card auth-card">
+      <div class="section-header">
+        <span>
+          <span class="section-header-label">Sign In</span>
+          <span class="section-header-copy">Authenticate to access the frontend tools.</span>
+        </span>
+      </div>
+      <div class="section-body">
+        <form id="loginForm" action="/auth/login" method="post" class="section-stack">
+          <input id="nextInput" name="next" type="hidden" value="/ui/config-builder" />
+
+          <div class="field-block">
+            <label for="username" class="form-label required">Username</label>
+            <input id="username" name="username" class="input-base" autocomplete="username" required />
+          </div>
+
+          <div class="field-block">
+            <label for="password" class="form-label required">Password</label>
+            <input id="password" name="password" type="password" class="input-base" autocomplete="current-password" required />
+          </div>
+
+          <div id="loginStatus" class="status-text"></div>
+
+          <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const search = new URLSearchParams(window.location.search);
+    const nextValue = search.get('next');
+    const nextInput = document.getElementById('nextInput');
+    const status = document.getElementById('loginStatus');
+
+    if (nextValue && nextValue.startsWith('/')) {
+      nextInput.value = nextValue;
+    }
+
+    if (search.get('error') === '1') {
+      status.textContent = 'Invalid credentials. Try again.';
+      status.classList.add('error');
+    } else if (search.get('loggedOut') === '1') {
+      status.textContent = 'You have been logged out.';
+    }
+  </script>
+</body>
+</html>
