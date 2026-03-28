@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Reference | Gateherald Docs</title>
+  <link rel="stylesheet" href="ui/dist/styles.css">
+</head>
+<body class="app-body">
+  <main class="app-shell">
+    <section class="app-brand" aria-label="Gateherald">
+      <p class="app-brand-title">Gateherald</p>
+      <p class="app-brand-kicker">Docs</p>
+    </section>
+
+    <nav class="app-nav" aria-label="Docs Sections">
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link active" href="api-reference.html">Api Reference</a><a class="nav-link " href="deployment.html">Deployment</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
+    </nav>
+
+    <section class="section-card" aria-live="polite">
+      <div class="section-body docs-section-body">
+        <div class="markdown-content"><h1 id="api-reference">API Reference</h1>
+<h2 id="health">Health</h2>
+<ul>
+<li><code>GET /api</code></li>
+</ul>
+<p>When <code>FRONTEND_AUTH_ENABLED=true</code>, this endpoint requires a valid frontend login session cookie.</p>
+<h2 id="template-catalog-for-ui">Template Catalog For UI</h2>
+<ul>
+<li><code>GET /api/ui/templates</code></li>
+</ul>
+<p>When <code>FRONTEND_AUTH_ENABLED=true</code>, <code>/api/ui/*</code> endpoints require a valid frontend login session cookie.</p>
+<p>When <code>ADMIN_API_TOKEN</code> or <code>ADMIN_PROXY_SHARED_SECRET</code> is set, the template/config admin endpoints below require that credential in-app even if a proxy is misconfigured.</p>
+<p>If you run the app directly in local development (no reverse proxy header injection), keep both values blank to avoid blocking frontend UI API calls.</p>
+<h2 id="admin-auth-header-patterns">Admin Auth Header Patterns</h2>
+<ul>
+<li>Direct API clients with <code>ADMIN_API_TOKEN</code> can send either:<ul>
+<li><code>Authorization: Bearer &lt;ADMIN_API_TOKEN&gt;</code></li>
+<li><code>X-Gateherald-Admin-Token: &lt;ADMIN_API_TOKEN&gt;</code></li>
+</ul>
+</li>
+<li>Reverse proxies with <code>ADMIN_PROXY_SHARED_SECRET</code> should send:<ul>
+<li><code>X-Gateherald-Proxy-Secret: &lt;ADMIN_PROXY_SHARED_SECRET&gt;</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="templates-crud">Templates CRUD</h2>
+<ul>
+<li><code>GET /api/templates</code></li>
+<li><code>POST /api/templates</code></li>
+<li><code>PUT /api/templates/:id</code></li>
+<li><code>DELETE /api/templates/:id</code></li>
+</ul>
+<h2 id="configs-crud">Configs CRUD</h2>
+<ul>
+<li><code>GET /api/configs</code></li>
+<li><code>POST /api/configs</code></li>
+<li><code>PUT /api/configs/:id</code></li>
+<li><code>DELETE /api/configs/:id</code></li>
+</ul>
+<h2 id="webhook-ingress">Webhook Ingress</h2>
+<ul>
+<li><code>ALL /webhook/:routeId</code></li>
+</ul>
+</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

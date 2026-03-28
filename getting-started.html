@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Getting Started | Gateherald Docs</title>
+  <link rel="stylesheet" href="ui/dist/styles.css">
+</head>
+<body class="app-body">
+  <main class="app-shell">
+    <section class="app-brand" aria-label="Gateherald">
+      <p class="app-brand-title">Gateherald</p>
+      <p class="app-brand-kicker">Docs</p>
+    </section>
+
+    <nav class="app-nav" aria-label="Docs Sections">
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link active" href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link " href="deployment.html">Deployment</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
+    </nav>
+
+    <section class="section-card" aria-live="polite">
+      <div class="section-body docs-section-body">
+        <div class="markdown-content"><h1 id="getting-started">Getting Started</h1>
+<h2 id="tech-stack">Tech Stack</h2>
+<ul>
+<li>Node.js (ES Modules)</li>
+<li>Express 5</li>
+<li>Sequelize 6</li>
+<li>SQLite (default local DB)</li>
+<li>Tailwind CSS + PostCSS (UI build)</li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Node.js 20+</li>
+<li>npm</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<pre><code class="language-bash">npm install
+</code></pre>
+<p>Create <code>.env.development</code> from <code>.env.development.example</code>, then adjust values for your machine.</p>
+<h2 id="run-commands">Run Commands</h2>
+<pre><code class="language-bash">npm start               # NODE_ENV=development, loads .env.development
+npm run start:prod      # NODE_ENV=production, loads .env.production
+npm run build:css       # Build ui/dist/styles.css from ui/styles.css
+npm run db:migrate      # Run migration scripts
+npm run db:seed         # Run migrations + seed scripts
+npm run db:reset        # Delete DB, then run migrations + seed scripts
+npm run build:docs      # Local docs build
+npx serve .site         # Preview local docs after build (include -l flag and port if needed)
+</code></pre>
+<h2 id="environment-variables">Environment Variables</h2>
+<p>The app loads <code>.env.{NODE_ENV}</code> from project root.</p>
+<p>Core variables:</p>
+<ul>
+<li><code>PORT</code> (default: <code>3000</code>)</li>
+<li><code>API_TOKEN</code> (used by seeded outbound header example)</li>
+<li><code>SERVE_UI</code> (default: <code>true</code>; set <code>false</code> for backend/API-only mode)</li>
+<li><code>ALLOWED_ORIGINS</code> (comma-separated allowlist for CORS on <code>/api</code>)</li>
+<li><code>FRONTEND_ONLY_API</code> (default: <code>false</code>; set <code>true</code> to allow <code>/api/*</code> only from trusted frontend proxy headers or admin token clients)</li>
+<li><code>FRONTEND_AUTH_ENABLED</code> (default: <code>false</code>; set <code>true</code> to require login/logout for frontend UI and related APIs)</li>
+<li><code>FRONTEND_AUTH_USERNAME</code> (required when <code>FRONTEND_AUTH_ENABLED=true</code>)</li>
+<li><code>FRONTEND_AUTH_PASSWORD</code> (required when <code>FRONTEND_AUTH_ENABLED=true</code>)</li>
+<li><code>FRONTEND_AUTH_SESSION_SECRET</code> (required when <code>FRONTEND_AUTH_ENABLED=true</code>; used to sign session cookies)</li>
+<li><code>FRONTEND_AUTH_SESSION_TTL_MINUTES</code> (default: <code>480</code>)</li>
+<li><code>ADMIN_API_TOKEN</code> (optional; protects admin APIs with Bearer auth or <code>X-Gateherald-Admin-Token</code>)</li>
+<li><code>ADMIN_PROXY_SHARED_SECRET</code> (required when <code>FRONTEND_ONLY_API=true</code>; protects APIs via <code>X-Gateherald-Proxy-Secret</code> from a trusted reverse proxy)</li>
+<li><code>DEBUG_TRANSFORMED_PAYLOAD</code> (default: <code>false</code>; when <code>true</code>, logs transformed webhook payloads for local debugging)</li>
+<li><code>FORWARD_REQUEST_TIMEOUT_MS</code> (default: <code>15000</code>)</li>
+<li><code>FORWARD_MAX_CONCURRENT</code> (default: <code>20</code>)</li>
+<li><code>FORWARD_QUEUE_WARN_THRESHOLD</code> (default: <code>250</code>)</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-env">PORT=3000
+SERVE_UI=false
+ALLOWED_ORIGINS=https://gateherald.internal
+FRONTEND_ONLY_API=true
+FRONTEND_AUTH_ENABLED=true
+FRONTEND_AUTH_USERNAME=gateadmin
+FRONTEND_AUTH_PASSWORD=replace_me
+FRONTEND_AUTH_SESSION_SECRET=replace_with_long_random_secret
+API_TOKEN=replace_me
+ADMIN_API_TOKEN=replace_me_admin
+FORWARD_REQUEST_TIMEOUT_MS=15000
+FORWARD_MAX_CONCURRENT=20
+</code></pre>
+<h3 id="local-development-auth-defaults">Local Development Auth Defaults</h3>
+<p>When running the Node app directly on localhost (without an Nginx proxy adding auth headers), keep these blank so frontend API calls can load template/config records:</p>
+<pre><code class="language-env">ADMIN_API_TOKEN=
+ADMIN_PROXY_SHARED_SECRET=
+</code></pre>
+<p>Set those values only when you also send matching headers (<code>Authorization</code>/<code>X-Gateherald-Admin-Token</code> or <code>X-Gateherald-Proxy-Secret</code>) from a trusted client/proxy.</p>
+<h2 id="ui-access">UI Access</h2>
+<p>When <code>SERVE_UI=true</code>:</p>
+<ul>
+<li>Config Builder: <code>/ui/config-builder</code></li>
+<li>Template Builder: <code>/ui/template-builder</code></li>
+<li>Docs: <code>https://tcurrent.github.io/gateherald/</code></li>
+</ul>
+<p>The UI files also support static hosting with relative paths:</p>
+<ul>
+<li><code>./config-builder.html</code></li>
+<li><code>./template-builder.html</code></li>
+<li><code>./dist/styles.css</code></li>
+</ul>
+<h2 id="route-format">Route Format</h2>
+<p>Configured route paths must start with:</p>
+<pre><code class="language-text">/webhook/
+</code></pre>
+<p>Typical format used by the UI:</p>
+<pre><code class="language-text">/webhook/{routeName}/{ULID}
+</code></pre>
+<h2 id="data-model">Data Model</h2>
+<p>Primary tables:</p>
+<ul>
+<li><code>ingress</code></li>
+<li><code>egress</code></li>
+<li><code>templates</code></li>
+<li><code>route_configs</code></li>
+</ul>
+<p>Default local database file:</p>
+<ul>
+<li><code>gateherald.db</code></li>
+</ul>
+<h2 id="migration-and-seeding-behavior">Migration And Seeding Behavior</h2>
+<p>On app startup:</p>
+<ol>
+<li>Migration scripts run</li>
+<li>Previously applied migrations are skipped using an internal script-run tracking table</li>
+<li>Templates and route configs are loaded into runtime memory</li>
+<li>Route config validation runs before server start</li>
+</ol>
+<p>Seeder scripts are applied only when explicitly running:</p>
+<pre><code class="language-bash">npm run db:seed
+</code></pre>
+<p>If you deleted sample records and need them back, rerun <code>npm run db:seed</code>.</p>
+<p>Expected sample records:</p>
+<ul>
+<li>Template: <code>sample.base</code></li>
+<li>Route path: <code>/webhook/sample/01J0Z8X3GWBD9117Q9H4M2KCFP</code></li>
+</ul>
+<h2 id="frontend-api-base-url-single-file-config">Frontend API Base URL (Single File Config)</h2>
+<p>To point UI calls at a different backend origin, set this once in <code>ui/env.js</code>:</p>
+<pre><code class="language-js">window.GATEHERALD_API_BASE_URL = &#39;https://api.gateherald.example.com&#39;;
+</code></pre>
+<p>If this value is empty, UI uses same-origin <code>/api/...</code>.</p>
+</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

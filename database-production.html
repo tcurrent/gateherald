@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Database In Production | Gateherald Docs</title>
+  <link rel="stylesheet" href="ui/dist/styles.css">
+</head>
+<body class="app-body">
+  <main class="app-shell">
+    <section class="app-brand" aria-label="Gateherald">
+      <p class="app-brand-title">Gateherald</p>
+      <p class="app-brand-kicker">Docs</p>
+    </section>
+
+    <nav class="app-nav" aria-label="Docs Sections">
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link " href="deployment.html">Deployment</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link active" href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
+    </nav>
+
+    <section class="section-card" aria-live="polite">
+      <div class="section-body docs-section-body">
+        <div class="markdown-content"><h1 id="database-in-production">Database In Production</h1>
+<h2 id="high-availability-note">High Availability Note</h2>
+<p>Current default storage is SQLite, which is file-based and local.
+For production HA/multi-node deployments, move to a managed relational database (for example, Postgres) and update Sequelize config accordingly.</p>
+<h2 id="using-postgresmysql-in-production">Using Postgres/MySQL In Production</h2>
+<p>The app supports environment-driven database selection:</p>
+<ul>
+<li>Default fallback: SQLite</li>
+<li>URL-based: <code>DATABASE_URL</code></li>
+<li>Field-based: <code>DB_DIALECT</code>, <code>DB_HOST</code>, <code>DB_PORT</code>, <code>DB_NAME</code>, <code>DB_USER</code>, <code>DB_PASSWORD</code></li>
+<li>Optional TLS flags: <code>DB_SSL</code>, <code>DB_SSL_REJECT_UNAUTHORIZED</code></li>
+</ul>
+<p>SQLite remains the default for local development when DB settings are omitted.</p>
+<ol>
+<li>Install the DB driver package:</li>
+</ol>
+<pre><code class="language-bash"># Postgres
+npm install pg pg-hstore
+
+# MySQL
+npm install mysql2
+</code></pre>
+<ol start="2">
+<li>Add production environment values (example):</li>
+</ol>
+<pre><code class="language-env">NODE_ENV=production
+SERVE_UI=false
+ALLOWED_ORIGINS=https://gateherald.internal
+
+# Option A: single URL
+DATABASE_URL=postgres://gateherald_user:strong_password@db.internal:5432/gateherald
+
+# Option B: explicit fields
+DB_DIALECT=postgres
+DB_HOST=db.internal
+DB_PORT=5432
+DB_NAME=gateherald
+DB_USER=gateherald_user
+DB_PASSWORD=strong_password
+DB_SSL=true
+</code></pre>
+<ol start="3">
+<li>Run migrations against the target DB:</li>
+</ol>
+<pre><code class="language-bash">npm run db:migrate
+</code></pre>
+<ol start="4">
+<li>Seed only when needed:</li>
+</ol>
+<pre><code class="language-bash">npm run db:seed
+</code></pre>
+<p>Important script note:</p>
+<ul>
+<li><code>scripts/db-reset.js</code> now handles both SQLite and non-SQLite:<ul>
+<li>SQLite: deletes DB file when possible, otherwise drops tables in-place</li>
+<li>Postgres/MySQL/etc: drops tables in-place, then reruns migrations and seeders</li>
+</ul>
+</li>
+<li>Use this script carefully in production because it is destructive.</li>
+</ul>
+<p>Internal-network security guidance for the database tier:</p>
+<ul>
+<li>Set <code>DB_HOST</code> (or <code>DATABASE_URL</code>) to a private/internal endpoint only (<code>db.internal</code>, VPC private IP, private DNS).</li>
+<li>Do not expose the DB listener directly to public internet.</li>
+<li>Restrict inbound DB access to app and migration hosts only (security groups/firewall allowlist).</li>
+<li>Keep TLS enabled (<code>DB_SSL=true</code>) when supported by your DB platform.</li>
+</ul>
+<p>Recommended production DB practices:</p>
+<ul>
+<li>Use a managed DB service with backups, PITR, and monitoring.</li>
+<li>Use least-privilege DB users (separate app user and migration user if possible).</li>
+<li>Enforce TLS from app to DB.</li>
+<li>Store DB credentials in a secret manager, not in committed <code>.env</code> files.</li>
+</ul>
+</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

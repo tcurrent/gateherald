@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Troubleshooting | Gateherald Docs</title>
+  <link rel="stylesheet" href="ui/dist/styles.css">
+</head>
+<body class="app-body">
+  <main class="app-shell">
+    <section class="app-brand" aria-label="Gateherald">
+      <p class="app-brand-title">Gateherald</p>
+      <p class="app-brand-kicker">Docs</p>
+    </section>
+
+    <nav class="app-nav" aria-label="Docs Sections">
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link " href="deployment.html">Deployment</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link active" href="troubleshooting.html">Troubleshooting</a>
+      <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
+    </nav>
+
+    <section class="section-card" aria-live="polite">
+      <div class="section-body docs-section-body">
+        <div class="markdown-content"><h1 id="troubleshooting">Troubleshooting</h1>
+<p>This guide covers common issues and solutions for Gateherald development and production deployments.</p>
+<h2 id="common-issues">Common Issues</h2>
+<ul>
+<li><a href="#startup-issues">Startup Issues</a></li>
+<li><a href="#database-issues">Database Issues</a></li>
+<li><a href="#authentication--security">Authentication &amp; Security</a></li>
+<li><a href="#webhook--transformation">Webhook &amp; Transformation</a></li>
+<li><a href="#forwarding--performance">Forwarding &amp; Performance</a></li>
+<li><a href="#ui--configuration">UI &amp; Configuration</a></li>
+<li><a href="#deployment">Deployment</a></li>
+</ul>
+<hr>
+<h2 id="startup-issues">Startup Issues</h2>
+<h3 id="app-wont-start-frontendonlyapi-enabled-but-adminproxysharedsecret-is-blank">App Won&#39;t Start: &quot;FRONTEND_ONLY_API enabled but ADMIN_PROXY_SHARED_SECRET is blank&quot;</h3>
+<p><strong>Problem</strong>: Server fails to start with validation error when <code>FRONTEND_ONLY_API=true</code> but no proxy secret is configured.</p>
+<p><strong>Root Cause</strong>: When the frontend-only API mode is enabled, all direct API requests must be authenticated via a proxy header. Without a shared secret, there&#39;s no way to validate these headers.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>If using a reverse proxy</strong>: Set <code>ADMIN_PROXY_SHARED_SECRET</code> to a strong random value in <code>.env.production</code>:</p>
+<pre><code>FRONTEND_ONLY_API=true
+ADMIN_PROXY_SHARED_SECRET=your-long-random-secret-here
+</code></pre>
+<p>The proxy must inject the <code>X-Gateherald-Proxy-Secret</code> header with this exact value.</p>
+</li>
+<li><p><strong>If not using a proxy</strong>: Disable frontend-only mode:</p>
+<pre><code>FRONTEND_ONLY_API=false
+ADMIN_API_TOKEN=your-static-token-for-direct-api-clients
+</code></pre>
+</li>
+<li><p><strong>For local development</strong>: Use the <code>.env.development</code> defaults (frontend-only disabled).</p>
+</li>
+</ol>
+<hr>
+<h3 id="app-wont-start-routes-validation-failed">App Won&#39;t Start: Routes validation failed</h3>
+<p><strong>Problem</strong>: Server fails to start with &quot;&#39;TemplateDriver&#39; validation failed&quot; or similar template/route errors.</p>
+<p><strong>Root Cause</strong>: A route config references a template or field mapping that doesn&#39;t exist or is invalid. This is caught at startup to prevent silently broken routes.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li>Check the specific validation error message in the console output.</li>
+<li>Access the app database (SQLite):<pre><code class="language-bash">sqlite3 gateherald.db
+SELECT id, name, template_id FROM route_configs;
+SELECT id, name FROM templates;
+</code></pre>
+</li>
+<li>For each route, verify:<ul>
+<li>The referenced <code>template_id</code> exists in the templates table</li>
+<li>Field mappings reference actual template fields</li>
+</ul>
+</li>
+<li>Use the browser UI (<code>/ui/config-builder</code>) to update or delete invalid routes.</li>
+<li>Restart the app.</li>
+</ol>
+<hr>
+<h3 id="port-already-in-use">Port Already in Use</h3>
+<p><strong>Problem</strong>: <code>Error: listen EADDRINUSE: address already in use :::3000</code></p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p>Check what&#39;s using the port:</p>
+<pre><code class="language-bash"># Windows
+netstat -ano | findstr :3000
+taskkill /PID &lt;PID&gt; /F
+
+# Linux/macOS
+lsof -i :3000
+kill -9 &lt;PID&gt;
+</code></pre>
+</li>
+<li><p>Or change the port in <code>.env.development</code>:</p>
+<pre><code>PORT=3001
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3 id="missing-environment-variables">Missing Environment Variables</h3>
+<p><strong>Problem</strong>: Warnings or errors about undefined environment variables.</p>
+<p><strong>Root Cause</strong>: <code>.env.development</code> or <code>.env.production</code> file is missing or incomplete.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p>Ensure the correct <code>.env</code> file exists:</p>
+<pre><code class="language-bash"># For development
+ls .env.development
+
+# For production
+ls .env.production
+</code></pre>
+</li>
+<li><p>If missing, copy the template from <code>.env.development</code> and update for your environment.</p>
+</li>
+<li><p>Essential variables for all environments:</p>
+<pre><code class="language-bash">NODE_ENV=development        # or production
+PORT=3000
+SERVE_UI=true
+</code></pre>
+</li>
+<li><p>If using frontend UI, also set:</p>
+<pre><code class="language-bash">FRONTEND_AUTH_ENABLED=true
+FRONTEND_AUTH_USERNAME=gateadmin
+FRONTEND_AUTH_PASSWORD=strong-password-here
+FRONTEND_AUTH_SESSION_SECRET=long-random-string
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2 id="database-issues">Database Issues</h2>
+<h3 id="database-migration-failed">Database Migration Failed</h3>
+<p><strong>Problem</strong>: <code>npm run db:migrate</code> fails with SQL errors.</p>
+<p><strong>Root Cause</strong>: Database schema is corrupted, or you&#39;re trying to migrate a database created by a different version of Gateherald.</p>
+<p><strong>Solution</strong>:</p>
+<p><strong>For development (data loss is OK)</strong>:</p>
+<pre><code class="language-bash"># Reset the database completely
+npm run db:reset
+
+# Re-run migrations
+npm run db:migrate
+
+# Seed sample data
+npm run db:seed
+</code></pre>
+<p><strong>For production (preserve data)</strong>:</p>
+<ol>
+<li><p>Backup your database:</p>
+<pre><code class="language-bash">cp gateherald.db gateherald.db.backup
+</code></pre>
+</li>
+<li><p>Review the migration file in <code>migrations/</code> to understand what&#39;s failing.</p>
+</li>
+<li><p>If the migration has a bug, fix it in the migration file and re-run:</p>
+<pre><code class="language-bash">npm run db:migrate
+</code></pre>
+</li>
+<li><p>If the database schema is too corrupted, consider:</p>
+<ul>
+<li>Restoring from a recent backup</li>
+<li>Using <code>sqlite3</code> CLI to inspect and fix schema manually</li>
+<li>Contact maintainers if the issue persists</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="accidentally-ran-npm-run-dbreset-in-production">Accidentally Ran <code>npm run db:reset</code> in Production</h3>
+<p><strong>Problem</strong>: All data (routes, templates, logs) has been deleted.</p>
+<p><strong>Severity</strong>: <strong>CRITICAL</strong> — Data loss has occurred.</p>
+<p><strong>Recovery</strong>:</p>
+<ol>
+<li><strong>Immediately stop the application</strong> to prevent further writes.</li>
+<li>Restore from your most recent backup:<pre><code class="language-bash">cp gateherald.db.backup gateherald.db
+</code></pre>
+</li>
+<li>Verify data is intact by checking row counts in SQLite.</li>
+<li>Restart the application.</li>
+</ol>
+<p><strong>Prevention</strong>:</p>
+<ul>
+<li>Run <code>db:reset</code> NEVER in production.</li>
+<li>Use a CI/CD pipeline that prevents running destructive commands on production databases.</li>
+<li>Require manual database migrations with review steps.</li>
+<li>Keep automated backups (e.g., nightly).</li>
+</ul>
+<hr>
+<h3 id="database-file-missing-or-corrupted">Database File Missing or Corrupted</h3>
+<p><strong>Problem</strong>: <code>Error: SQLITE_CANTOPEN</code> or file not found errors.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p>Check that <code>gateherald.db</code> exists in the project root:</p>
+<pre><code class="language-bash">ls -la gateherald.db
+</code></pre>
+</li>
+<li><p>If missing and you have a backup:</p>
+<pre><code class="language-bash">cp gateherald.db.backup gateherald.db
+npm start
+</code></pre>
+</li>
+<li><p>If missing and no backup, create a fresh database:</p>
+<pre><code class="language-bash">rm gateherald.db  # if corrupted
+npm run db:migrate
+npm run db:seed
+</code></pre>
+</li>
+<li><p>If the file exists but is corrupted:</p>
+<pre><code class="language-bash"># Verify SQLite can read it
+sqlite3 gateherald.db &quot;SELECT COUNT(*) FROM sqlite_master;&quot;
+
+# If it returns the Gateherald schema count, it&#39;s readable
+# If it fails, restore from backup or rebuild
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2 id="authentication--security">Authentication &amp; Security</h2>
+<h3 id="locked-out-of-frontend-ui">Locked Out of Frontend UI</h3>
+<p><strong>Problem</strong>: Can&#39;t log in to <code>/ui</code> even with correct credentials.</p>
+<p><strong>Root Cause</strong>: Session secret is not set, or credentials don&#39;t match the environment variables.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Check environment variables match</strong>:</p>
+<pre><code class="language-bash"># In your .env file, verify:
+FRONTEND_AUTH_USERNAME=gateadmin
+FRONTEND_AUTH_PASSWORD=dev-password-please-change
+FRONTEND_AUTH_SESSION_SECRET=dev-session-secret-please-change-this-to-a-long-random-string
+</code></pre>
+</li>
+<li><p><strong>If you forgot your password</strong>: Update it in <code>.env.development</code> (for dev only!):</p>
+<pre><code class="language-bash">FRONTEND_AUTH_PASSWORD=new-password-here
+npm start  # Restart to reload .env
+</code></pre>
+</li>
+<li><p><strong>For production</strong>: If you&#39;ve lost credentials, use SQLite CLI to check or reset via database manipulation (requires careful handling).</p>
+</li>
+<li><p><strong>If session tokens keep expiring</strong>: Increase TTL in <code>.env</code>:</p>
+<pre><code class="language-bash">FRONTEND_AUTH_SESSION_TTL_MINUTES=1440  # 24 hours instead of default 8
+</code></pre>
+</li>
+<li><p><strong>If getting 403 Forbidden on UI routes</strong>: Check that <code>SERVE_UI=true</code> and frontend auth is properly configured.</p>
+</li>
+</ol>
+<hr>
+<h3 id="api-request-returns-403-unauthorized">API Request Returns 403 Unauthorized</h3>
+<p><strong>Problem</strong>: API calls to <code>/api/*</code> return 403 even with correct authentication.</p>
+<p><strong>Possible Causes</strong>:</p>
+<ol>
+<li><p><strong>Missing or invalid ADMIN_API_TOKEN</strong>:</p>
+<ul>
+<li>If using token-based auth, set <code>ADMIN_API_TOKEN</code> in <code>.env</code>.</li>
+<li>Send it as: <code>Authorization: Bearer &lt;ADMIN_API_TOKEN&gt;</code></li>
+</ul>
+</li>
+<li><p><strong>FRONTEND_ONLY_API enabled without proxy</strong>:</p>
+<ul>
+<li>If <code>FRONTEND_ONLY_API=true</code>, all API requests must include <code>X-Gateherald-Proxy-Secret</code> header.</li>
+<li>This is for proxied requests only; direct API clients need <code>ADMIN_API_TOKEN</code>.</li>
+</ul>
+</li>
+<li><p><strong>Request not authenticated at all</strong>:</p>
+<pre><code class="language-bash"># Wrong: no auth
+curl http://localhost:3000/api/templates
+
+# Correct: with token
+curl -H &quot;Authorization: Bearer dev-api-token-12345&quot; \
+  http://localhost:3000/api/templates
+</code></pre>
+</li>
+</ol>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p>Check which auth mode you&#39;re in:</p>
+<pre><code class="language-bash">echo $FRONTEND_ONLY_API
+echo $ADMIN_API_TOKEN
+</code></pre>
+</li>
+<li><p>For <strong>frontend-only mode</strong> (proxied requests):</p>
+<ul>
+<li>Verify the proxy injects <code>X-Gateherald-Proxy-Secret</code> header correctly.</li>
+<li>Test locally by temporarily disabling frontend-only mode.</li>
+</ul>
+</li>
+<li><p>For <strong>direct API access</strong> (development):</p>
+<pre><code class="language-bash"># Ensure token is set
+export ADMIN_API_TOKEN=&quot;dev-api-token-12345&quot;
+npm start
+
+# Then use it
+curl -H &quot;Authorization: Bearer dev-api-token-12345&quot; \
+  http://localhost:3000/api/templates
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2 id="webhook--transformation">Webhook &amp; Transformation</h2>
+<h3 id="webhook-received-but-no-egress-log-entry">Webhook Received But No Egress Log Entry</h3>
+<p><strong>Problem</strong>: Webhook was accepted (200 response) but data wasn&#39;t forwarded.</p>
+<p><strong>Root Cause</strong>: Forwarding happens asynchronously. Check if the route is valid and targets are reachable.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Verify ingress was logged</strong>:</p>
+<pre><code class="language-bash">sqlite3 gateherald.db &quot;SELECT * FROM ingresses ORDER BY created_at DESC LIMIT 5;&quot;
+</code></pre>
+<p>If no entry, the webhook route may not exist.</p>
+</li>
+<li><p><strong>Check egress logs</strong>:</p>
+<pre><code class="language-bash">sqlite3 gateherald.db &quot;SELECT * FROM egresses ORDER BY created_at DESC LIMIT 5;&quot;
+</code></pre>
+<p>Look for failures with the same webhook path.</p>
+</li>
+<li><p><strong>Check console output</strong> for transformation errors:</p>
+<pre><code>Error transforming TemplateDriver payload: ...
+</code></pre>
+</li>
+<li><p><strong>Verify the route exists</strong> and is configured:</p>
+<pre><code class="language-bash">sqlite3 gateherald.db &quot;SELECT id, name, template_id, target_url FROM route_configs WHERE name=&#39;your-route-name&#39;;&quot;
+</code></pre>
+</li>
+<li><p><strong>Verify the target URL is reachable</strong>:</p>
+<pre><code class="language-bash">curl -v https://your-target-endpoint/webhook
+</code></pre>
+<p>If it times out or returns 5xx, fix the target before retesting.</p>
+</li>
+</ol>
+<hr>
+<h3 id="transformation-returned-null">Transformation Returned Null</h3>
+<p><strong>Problem</strong>: Webhook data was received and logged, but egress shows null payload.</p>
+<p><strong>Root Cause</strong>: The TemplateDriver transformation encountered an error (JSON parse error, missing template, invalid field mapping) and returned null without propagating the error.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Check the console for transformation error</strong>:</p>
+<pre><code>Error transforming TemplateDriver payload: Invalid JSON in template
+</code></pre>
+</li>
+<li><p><strong>Inspect the ingress payload</strong> to see what was received:</p>
+<pre><code class="language-bash">sqlite3 gateherald.db &quot;SELECT * FROM ingresses ORDER BY created_at DESC LIMIT 1;&quot; 
+</code></pre>
+</li>
+<li><p><strong>Test the template mapping manually</strong>:</p>
+<ul>
+<li>Open <code>/ui/template-builder</code></li>
+<li>Select the template used by this route</li>
+<li>Paste in the sampled ingress payload</li>
+<li>Check what fields are resolved</li>
+</ul>
+</li>
+<li><p><strong>Common causes</strong>:</p>
+<ul>
+<li>Template references a field that doesn&#39;t exist in the payload (e.g., <code>payload.user.email</code> when user is null)</li>
+<li>Documentation rule validation failed (field marked as required but empty in payload)</li>
+<li>Invalid JSONPath or field mapping syntax</li>
+</ul>
+</li>
+<li><p><strong>Fix the template</strong> via the UI or by reviewing field mappings, then resend the webhook.</p>
+</li>
+</ol>
+<hr>
+<h3 id="template-field-mapping-not-working">Template Field Mapping Not Working</h3>
+<p><strong>Problem</strong>: Changed template field mappings, but old data still appears in egress.</p>
+<p><strong>Root Cause</strong>: Route config is cached; you need to restart the application or reload the route.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Template changes take effect immediately</strong> on new webhooks. If old data persists:</p>
+<ul>
+<li>Check you modified the correct template.</li>
+<li>Check the route references the correct template.</li>
+</ul>
+</li>
+<li><p><strong>If it still doesn&#39;t work</strong>, restart the app:</p>
+<pre><code class="language-bash">npm start
+</code></pre>
+</li>
+<li><p><strong>Check the template UI</strong>:</p>
+<ul>
+<li>Open <code>/ui/template-builder</code></li>
+<li>Select your template</li>
+<li>Verify field mappings are correct</li>
+<li>Test with a sample payload</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="documentation-rule-validation-error-on-webhook">Documentation Rule Validation Error on Webhook</h3>
+<p><strong>Problem</strong>: Webhook is rejected or returns null; error mentions &quot;documentation rule&quot; or &quot;required field.&quot;</p>
+<p><strong>Root Cause</strong>: One or more template fields are marked as required (documentation rule) but the inbound webhook doesn&#39;t include data for that field.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Review the documentation rule in the template</strong>:</p>
+<ul>
+<li>Open <code>/ui/template-builder</code></li>
+<li>Select the template</li>
+<li>Look for fields marked with documentation rules</li>
+<li>Check if they&#39;re marked as required</li>
+</ul>
+</li>
+<li><p><strong>Either update the template</strong> (relax the requirement):</p>
+<ul>
+<li>Remove the documentation rule</li>
+<li>Or make the field optional (uncheck required)</li>
+</ul>
+<p><strong>Or update your webhook sender</strong> to include the required fields.</p>
+</li>
+<li><p><strong>Test the mapping</strong> with a complete payload that includes all required fields.</p>
+</li>
+</ol>
+<hr>
+<h2 id="forwarding--performance">Forwarding &amp; Performance</h2>
+<h3 id="forward-queue-getting-large-growing-unbounded">Forward Queue Getting Large (Growing Unbounded)</h3>
+<p><strong>Problem</strong>: Console warns: &quot;Forward queue depth is 250; consider increasing FORWARD_MAX_CONCURRENT&quot;</p>
+<p><strong>Root Cause</strong>: Target endpoints are too slow or unresponsive. Webhooks are piling up waiting to be forwarded.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Increase concurrent forwards</strong> (temporary fix):</p>
+<pre><code class="language-bash">export FORWARD_MAX_CONCURRENT=50
+npm start
+</code></pre>
+<p>Add to <code>.env.production</code>:</p>
+<pre><code>FORWARD_MAX_CONCURRENT=50
+</code></pre>
+</li>
+<li><p><strong>Increase request timeout</strong> if slow endpoints need longer:</p>
+<pre><code class="language-bash">export FORWARD_REQUEST_TIMEOUT_MS=30000  # 30 seconds
+npm start
+</code></pre>
+</li>
+<li><p><strong>Fix the root cause</strong> (recommended):</p>
+<ul>
+<li>Check if target endpoint is responding:<pre><code class="language-bash">curl -v https://your-target/webhook
+</code></pre>
+</li>
+<li>Increase timeout on the target side (database, API calls, etc.)</li>
+<li>Add more workers/replicas to the target service</li>
+<li>Check network connectivity</li>
+</ul>
+</li>
+<li><p><strong>Monitor the queue</strong>:</p>
+<pre><code class="language-bash">sqlite3 gateherald.db &quot;SELECT COUNT(*) FROM egresses WHERE status=&#39;pending&#39;;&quot;
+</code></pre>
+<p>Once targets are fixed, queue should drain.</p>
+</li>
+</ol>
+<hr>
+<h3 id="webhook-forwarding-fails-silently-404-timeout">Webhook Forwarding Fails Silently (404, Timeout)</h3>
+<p><strong>Problem</strong>: Egress entry shows failure status, but you don&#39;t know why.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Check the egress log for error details</strong>:</p>
+<pre><code class="language-bash">sqlite3 gateherald.db \
+  &quot;SELECT id, route_config_id, response_status, response_body FROM egresses \
+   WHERE status=&#39;failed&#39; ORDER BY created_at DESC LIMIT 1;&quot;
+</code></pre>
+</li>
+<li><p><strong>Common HTTP errors</strong>:</p>
+<ul>
+<li><strong>404</strong>: Target endpoint URL is wrong or changed. Verify in route config.</li>
+<li><strong>500</strong>: Target service is throwing errors. Check its logs.</li>
+<li><strong>Connection timeout</strong>: Network is down or firewall blocking. Check connectivity.</li>
+</ul>
+</li>
+<li><p><strong>Test the target manually</strong>:</p>
+<pre><code class="language-bash">curl -X POST -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{&quot;test&quot;: &quot;data&quot;}&#39; \
+  https://your-target-url
+</code></pre>
+</li>
+<li><p><strong>Update the route</strong> if URL is wrong via <code>/ui/config-builder</code>.</p>
+</li>
+</ol>
+<hr>
+<h2 id="ui--configuration">UI &amp; Configuration</h2>
+<h3 id="ui-not-loading-404-on-ui">UI Not Loading (404 on /ui)</h3>
+<p><strong>Problem</strong>: Navigating to <code>/ui</code> returns 404.</p>
+<p><strong>Root Cause</strong>: <code>SERVE_UI=false</code> or UI files are missing.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Check if UI serving is enabled</strong>:</p>
+<pre><code class="language-bash">echo $SERVE_UI  # Should be &#39;true&#39;
+</code></pre>
+</li>
+<li><p><strong>Enable it in <code>.env</code></strong>:</p>
+<pre><code>SERVE_UI=true
+npm start
+</code></pre>
+</li>
+<li><p><strong>Check UI files exist</strong>:</p>
+<pre><code class="language-bash">ls ui/
+</code></pre>
+</li>
+<li><p><strong>If missing</strong>, restore from git:</p>
+<pre><code class="language-bash">git restore ui/
+npm run build:css  # Rebuild CSS
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3 id="config-builder-wont-save-route">Config Builder Won&#39;t Save Route</h3>
+<p><strong>Problem</strong>: Submit button in <code>/ui/config-builder</code> doesn&#39;t work or returns an error.</p>
+<p><strong>Possible Causes</strong>:</p>
+<ol>
+<li><p><strong>Validation error</strong> (shown in UI as red text):</p>
+<ul>
+<li>Template doesn&#39;t exist</li>
+<li>Target URL is invalid</li>
+<li>Required fields are empty</li>
+<li>Field mappings reference non-existent template fields</li>
+</ul>
+</li>
+<li><p><strong>API authentication failed</strong>:</p>
+<ul>
+<li>Session expired; log out and log back in</li>
+<li>Or check server logs for auth errors</li>
+</ul>
+</li>
+<li><p><strong>Database error</strong>:</p>
+<ul>
+<li>Check console output for SQL errors</li>
+<li>Verify database file is writable</li>
+</ul>
+</li>
+</ol>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li>Check error message displayed in the UI.</li>
+<li>For validation errors, fix the values and retry.</li>
+<li>For auth errors, refresh the page and log in again.</li>
+<li>For database errors, check file permissions:<pre><code class="language-bash">ls -la gateherald.db
+chmod 644 gateherald.db  # Ensure readable/writable
+npm start
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3 id="new-routes-dont-work-after-save">New Routes Don&#39;t Work After Save</h3>
+<p><strong>Problem</strong>: Created a new route in the UI, but webhooks to it return 404.</p>
+<p><strong>Root Cause</strong>: Route is in the database but not loaded in memory. App caches routes at startup.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Routes are reloaded from the database periodically</strong>, but:</p>
+<ul>
+<li>If your app loads routes once at startup and caches them, you must <strong>restart</strong>:<pre><code class="language-bash"># Stop the app and start it again
+npm start
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>Or</strong> implement hot-reloading:</p>
+<ul>
+<li>Check if <code>/admin/reload-routes</code> endpoint exists.</li>
+<li>If not, restart is the only way.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="template-changes-dont-take-effect">Template Changes Don&#39;t Take Effect</h3>
+<p><strong>Problem</strong>: Modified a template in the UI, but old transformations still happen.</p>
+<p><strong>Root Cause</strong>: Same as routes — templates may be cached.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Restart the app</strong> to reload all templates:</p>
+<pre><code class="language-bash">npm start
+</code></pre>
+</li>
+<li><p><strong>Verify the template was saved</strong>:</p>
+<ul>
+<li>Open <code>/ui/template-builder</code></li>
+<li>Select the template</li>
+<li>Check that changes are visible</li>
+</ul>
+</li>
+<li><p><strong>Test a fresh webhook</strong> to the route using this template. Transformation should reflect the new mappings.</p>
+</li>
+</ol>
+<hr>
+<h2 id="deployment">Deployment</h2>
+<h3 id="production-app-crashes-after-deploy">Production App Crashes After Deploy</h3>
+<p><strong>Problem</strong>: Deployed new version; app won&#39;t start or crashes after a few requests.</p>
+<p><strong>Root Cause</strong>: </p>
+<ul>
+<li>Database schema mismatch with new code</li>
+<li>Missing environment variables</li>
+<li>Corrupted database</li>
+</ul>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Check logs</strong>:</p>
+<pre><code class="language-bash">journalctl -u gateherald -n 50 -p err
+</code></pre>
+</li>
+<li><p><strong>If migration error</strong>: Run migrations:</p>
+<pre><code class="language-bash">npm run db:migrate
+npm start
+</code></pre>
+</li>
+<li><p><strong>If missing env vars</strong>: Verify <code>.env.production</code> is complete:</p>
+<pre><code class="language-bash">cat .env.production
+</code></pre>
+</li>
+<li><p><strong>If database corrupted</strong>: Restore from backup and retry.</p>
+</li>
+</ol>
+<hr>
+<h3 id="cpumemory-usage-high">CPU/Memory Usage High</h3>
+<p><strong>Problem</strong>: Server is consuming excessive resources.</p>
+<p><strong>Possible Causes</strong>:</p>
+<ol>
+<li><strong>Forward queue is too large</strong> (see <a href="#forward-queue-getting-large-growing-unbounded">Forward Queue Getting Large</a>)</li>
+<li><strong>Many old logs accumulating</strong> in the database</li>
+<li><strong>Route or template has infinite loop</strong> (rare, but check validation)</li>
+</ol>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>Clean up old logs</strong> (sample every hour from past retention period):</p>
+<pre><code class="language-bash">sqlite3 gateherald.db \
+  &quot;DELETE FROM ingresses WHERE created_at &lt; datetime(&#39;now&#39;, &#39;-30 days&#39;);&quot;
+VACUUM;  # Reclaim space
+</code></pre>
+</li>
+<li><p><strong>Check database size</strong>:</p>
+<pre><code class="language-bash">ls -lh gateherald.db
+</code></pre>
+</li>
+<li><p><strong>Monitor queue depth</strong>:</p>
+<pre><code class="language-bash">watch -n5 &#39;sqlite3 gateherald.db &quot;SELECT status, COUNT(*) FROM egresses GROUP BY status;&quot;&#39;
+</code></pre>
+</li>
+<li><p><strong>Increase timeouts</strong> if processing is slow but normal:</p>
+<pre><code class="language-bash">FORWARD_REQUEST_TIMEOUT_MS=30000
+FORWARD_MAX_CONCURRENT=50
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3 id="migrating-to-production-database">Migrating to Production Database</h3>
+<p><strong>Problem</strong>: Need to move from SQLite to PostgreSQL or MySQL in production.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p>This is a major migration. Currently Gateherald uses Sequelize with SQLite.</p>
+</li>
+<li><p>To switch databases:</p>
+<ul>
+<li>Change Sequelize config in <code>models/db-config.js</code></li>
+<li>Create migrations for the new database</li>
+<li>Export data from SQLite</li>
+<li>Import into the new database</li>
+<li>Test thoroughly in staging first</li>
+</ul>
+</li>
+<li><p><strong>Recommended approach</strong>:</p>
+<ul>
+<li>Keep SQLite for small deployments or local dev</li>
+<li>For production at scale, plan this migration carefully with the maintainers</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="ssltls-certificate-errors">SSL/TLS Certificate Errors</h3>
+<p><strong>Problem</strong>: HTTPS requests to webhooks fail with certificate errors.</p>
+<p><strong>Root Cause</strong>: Self-signed certificates, expired certificates, or certificate chain issues.</p>
+<p><strong>Solution</strong>:</p>
+<ol>
+<li><p><strong>For self-signed certificates in development</strong>:</p>
+<pre><code class="language-bash"># Accept self-signed certs (not for production!)
+NODE_TLS_REJECT_UNAUTHORIZED=0 npm start
+</code></pre>
+</li>
+<li><p><strong>For production</strong>:</p>
+<ul>
+<li>Ensure target endpoints have valid, trusted certificates</li>
+<li>Or configure the app to use a corporate CA bundle (rarely needed)</li>
+</ul>
+</li>
+<li><p><strong>Check certificate validity</strong>:</p>
+<pre><code class="language-bash">openssl s_client -connect your-target.com:443
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2 id="quick-reference-common-commands">Quick Reference: Common Commands</h2>
+<pre><code class="language-bash"># Development
+npm install
+npm start
+npm run build:css
+
+# Database maintenance
+npm run db:migrate       # Safe: run pending migrations
+npm run db:seed          # Add sample data
+npm run db:reset         # DANGEROUS: wipe &amp; recreate (dev only!)
+
+# Debugging
+sqlite3 gateherald.db &quot;SELECT COUNT(*) FROM ingresses;&quot;
+sqlite3 gateherald.db &quot;SELECT * FROM route_configs;&quot;
+sqlite3 gateherald.db &quot;SELECT * FROM templates;&quot;
+
+# Environment checks
+echo $NODE_ENV
+echo $FRONTEND_AUTH_ENABLED
+echo $FORWARD_MAX_CONCURRENT
+</code></pre>
+<hr>
+<h2 id="getting-help">Getting Help</h2>
+<p>If your issue isn&#39;t covered here:</p>
+<ol>
+<li>Check the server console output for error messages.</li>
+<li>Review the specific error in the database:<pre><code class="language-bash">sqlite3 gateherald.db &quot;SELECT * FROM ingresses WHERE created_at &gt; datetime(&#39;now&#39;, &#39;-5 minutes&#39;);&quot;
+</code></pre>
+</li>
+<li>Test endpoints manually with <code>curl</code>.</li>
+<li>Review the code in <code>logic/</code> and <code>models/</code> for the specific feature.</li>
+<li>Open an issue with logs, <code>.env</code> values (redacted), and steps to reproduce.</li>
+</ol>
+</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

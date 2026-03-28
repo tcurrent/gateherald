@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Overview | Gateherald Docs</title>
+  <link rel="stylesheet" href="ui/dist/styles.css">
+</head>
+<body class="app-body">
+  <main class="app-shell">
+    <section class="app-brand" aria-label="Gateherald">
+      <p class="app-brand-title">Gateherald</p>
+      <p class="app-brand-kicker">Docs</p>
+    </section>
+
+    <nav class="app-nav" aria-label="Docs Sections">
+      <a class="nav-link active" href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link " href="deployment.html">Deployment</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
+    </nav>
+
+    <section class="section-card" aria-live="polite">
+      <div class="section-body docs-section-body">
+        <div class="markdown-content"><h1 id="overview">Overview</h1>
+<p>Gateherald is a webhook gateway that accepts inbound webhook events, transforms payloads with a template-driven mapper, and forwards results to one or more downstream endpoints.</p>
+<p>It includes:</p>
+<ul>
+<li>A backend API and webhook runtime (Express + Sequelize)</li>
+<li>A route configuration builder UI</li>
+<li>A template builder UI</li>
+</ul>
+<h2 id="architecture-at-a-glance">Architecture At A Glance</h2>
+<ol>
+<li>Incoming webhook hits a configured route (<code>/webhook/{name}/{ULID}</code>).</li>
+<li>Route config selects a template and field mapping rules.</li>
+<li><code>TemplateDriver</code> transforms inbound payload into egress payload.</li>
+<li>App immediately responds to sender.</li>
+<li>Forwarding to target URLs happens asynchronously.</li>
+<li>Ingress and egress events are logged to the database.</li>
+</ol>
+<h2 id="features">Features</h2>
+<ul>
+<li>Database-backed route configs and templates</li>
+<li>Template-aware mapping validation</li>
+<li>Documentation rules for template fields that require them</li>
+<li>Ingress path discovery from sample payloads</li>
+<li>Multi-target forwarding with per-route headers</li>
+<li>CRUD APIs for templates and route configs</li>
+<li>Browser UI for managing templates and configs</li>
+</ul>
+<h2 id="documentation-map">Documentation Map</h2>
+<ul>
+<li><a href="getting-started.html">Getting Started</a></li>
+<li><a href="api-reference.html">API Reference</a></li>
+<li><a href="deployment.html">Deployment</a></li>
+<li><a href="nginx.html">Nginx Config Notes</a></li>
+<li><a href="database-production.html">Database In Production</a></li>
+<li><a href="troubleshooting.html">Troubleshooting</a></li>
+</ul>
+</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

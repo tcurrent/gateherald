@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deployment | Gateherald Docs</title>
+  <link rel="stylesheet" href="ui/dist/styles.css">
+</head>
+<body class="app-body">
+  <main class="app-shell">
+    <section class="app-brand" aria-label="Gateherald">
+      <p class="app-brand-title">Gateherald</p>
+      <p class="app-brand-kicker">Docs</p>
+    </section>
+
+    <nav class="app-nav" aria-label="Docs Sections">
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link active" href="deployment.html">Deployment</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
+    </nav>
+
+    <section class="section-card" aria-live="polite">
+      <div class="section-body docs-section-body">
+        <div class="markdown-content"><h1 id="deployment">Deployment</h1>
+<h2 id="internal-frontend--external-backend">Internal Frontend + External Backend</h2>
+<p>This is the recommended split when UI users are internal but webhook/API runtime must be externally reachable.</p>
+<h2 id="target-topology">Target Topology</h2>
+<ol>
+<li>Host frontend (<code>ui/</code>) on an internal-only web server.</li>
+<li>Host backend (<code>index.js</code>) on an external or DMZ-facing host.</li>
+<li>Allow internal users to reach frontend only.</li>
+<li>Allow frontend-to-backend HTTPS traffic only.</li>
+<li>Allow external webhook senders to backend webhook routes.</li>
+</ol>
+<h2 id="backend-settings">Backend Settings</h2>
+<p>Use API-only mode and strict CORS:</p>
+<pre><code class="language-env">SERVE_UI=false
+FRONTEND_ONLY_API=true
+ALLOWED_ORIGINS=https://gateherald.internal
+PORT=3000
+</code></pre>
+<p>Notes:</p>
+<ul>
+<li><code>ALLOWED_ORIGINS</code> must list exact internal frontend origins.</li>
+<li>Keep it explicit; do not use wildcard origins.</li>
+<li>Set <code>ADMIN_PROXY_SHARED_SECRET</code> and make your internal frontend proxy send <code>X-Gateherald-Proxy-Secret</code> on <code>/api/*</code> so only frontend-proxied API traffic is accepted.</li>
+</ul>
+<h2 id="proxy-auth-and-route-protection">Proxy Auth And Route Protection</h2>
+<p>Use the Nginx configs in <code>deploy/nginx/</code> to protect admin UI/API routes while keeping webhook ingress public.</p>
+<p>Protected routes:</p>
+<ul>
+<li><code>/ui/*</code></li>
+<li><code>/api/templates*</code></li>
+<li><code>/api/configs*</code></li>
+<li><code>/api/ui/templates</code></li>
+</ul>
+<p>Public routes:</p>
+<ul>
+<li><code>/webhook/*</code></li>
+</ul>
+<p>When <code>FRONTEND_ONLY_API=true</code>, external callers should only reach <code>/webhook/*</code>. Route <code>/api/*</code> traffic should be internal-proxy-only.</p>
+<p>For detailed Basic Auth/OIDC cutover and hardening guidance, see <code>docs/nginx.md</code>.</p>
+<h2 id="deployment-flow">Deployment Flow</h2>
+<ol>
+<li>Run backend in API-only mode (<code>SERVE_UI=false</code>).</li>
+<li>Deploy static UI files from <code>ui/</code> to <code>/var/www/gateherald-ui</code> on your internal proxy host.</li>
+<li>Install <code>deploy/nginx/gateherald.conf</code> as your site config.</li>
+<li>Copy the active auth snippet to <code>/etc/nginx/snippets/gateherald-admin-auth.conf</code>.</li>
+<li>Replace <code>replace_me_with_admin_proxy_shared_secret</code> in admin API locations with the exact <code>ADMIN_PROXY_SHARED_SECRET</code> value.</li>
+<li>Reload Nginx.</li>
+</ol>
+<p>Auth snippet activation and OIDC cutover steps are documented in <code>docs/nginx.md</code>.</p>
+<h2 id="split-host-nginx-deployment">Split-Host Nginx Deployment</h2>
+<p>Use <code>deploy/nginx/gateherald-split-hosts.conf</code> when UI and API/webhook are on different hosts:</p>
+<ul>
+<li>Internal host: <code>gateherald.internal</code><ul>
+<li>Serves static UI from <code>/var/www/gateherald-ui</code></li>
+<li>Enforces user auth for <code>/ui/*</code> and admin API routes</li>
+<li>Proxies admin API calls to <code>api.gateherald.example.com</code></li>
+</ul>
+</li>
+<li>External host: <code>api.gateherald.example.com</code><ul>
+<li>Exposes <code>/webhook/*</code> and <code>/api</code></li>
+<li>Restricts <code>/api/templates*</code>, <code>/api/configs*</code>, and <code>/api/ui/templates</code> to internal proxy CIDRs</li>
+<li>Returns <code>404</code> for <code>/ui/*</code></li>
+</ul>
+</li>
+</ul>
+<p>Rollout checklist:</p>
+<ol>
+<li>Set backend to API-only mode (<code>SERVE_UI=false</code>).</li>
+<li>Deploy UI files to internal host (<code>/var/www/gateherald-ui</code>).</li>
+<li>Apply the internal server block from <code>deploy/nginx/gateherald-split-hosts.conf</code> on internal Nginx.</li>
+<li>Apply the external server block from <code>deploy/nginx/gateherald-split-hosts.conf</code> on external Nginx.</li>
+<li>Replace example private CIDRs in external config with real internal proxy egress ranges.</li>
+<li>Set <code>ui/env.js</code> API base URL to <code>https://api.gateherald.example.com</code>.</li>
+<li>Replace <code>replace_me_with_admin_proxy_shared_secret</code> in both internal and external admin API locations with the exact <code>ADMIN_PROXY_SHARED_SECRET</code> value.</li>
+<li>Validate and reload both Nginx instances.</li>
+</ol>
+</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

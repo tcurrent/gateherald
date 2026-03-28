@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nginx Config Notes | Gateherald Docs</title>
+  <link rel="stylesheet" href="ui/dist/styles.css">
+</head>
+<body class="app-body">
+  <main class="app-shell">
+    <section class="app-brand" aria-label="Gateherald">
+      <p class="app-brand-title">Gateherald</p>
+      <p class="app-brand-kicker">Docs</p>
+    </section>
+
+    <nav class="app-nav" aria-label="Docs Sections">
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link " href="deployment.html">Deployment</a><a class="nav-link active" href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
+    </nav>
+
+    <section class="section-card" aria-live="polite">
+      <div class="section-body docs-section-body">
+        <div class="markdown-content"><h1 id="nginx-config-notes">Nginx Config Notes</h1>
+<h2 id="oidc-cutover-guidelines">OIDC Cutover Guidelines</h2>
+<p>Use these steps to switch from Basic Auth to OIDC without changing protected route definitions.</p>
+<ol>
+<li>Keep location blocks unchanged and only swap the auth include target content:<ul>
+<li>From: <code>deploy/nginx/snippets/gateherald-admin-auth-basic.conf</code></li>
+<li>To: <code>deploy/nginx/snippets/gateherald-admin-auth-oidc.conf</code></li>
+</ul>
+</li>
+<li>Enable <code>/oauth2/*</code> location on the internal UI host and route it to oauth2-proxy.</li>
+<li>Configure oauth2-proxy with your IdP issuer URL, client ID/secret, redirect URL, and session cookie settings.</li>
+<li>Keep external host restrictions in place (CIDR allowlist or stronger network controls). OIDC on internal host does not replace edge network restrictions.</li>
+<li>Verify behavior:<ul>
+<li>Unauthenticated requests to <code>/ui/*</code> and admin APIs redirect to IdP.</li>
+<li>Authenticated user can load UI and perform template/config CRUD.</li>
+<li><code>/webhook/*</code> remains publicly reachable.</li>
+<li>Admin APIs are unreachable from non-internal networks.</li>
+</ul>
+</li>
+<li>Rotate/remove Basic Auth credentials (<code>/etc/nginx/.htpasswd-gateherald</code>) after successful cutover.</li>
+</ol>
+<h2 id="recommended-post-cutover-hardening">Recommended Post-Cutover Hardening</h2>
+<ul>
+<li>Restrict OIDC access by IdP group/role.</li>
+<li>Use short session lifetimes and secure cookie flags.</li>
+<li>Keep HTTPS-only traffic between all tiers.</li>
+<li>Audit forwarded identity headers before relying on them downstream.</li>
+</ul>
+<h2 id="frontend-settings">Frontend Settings</h2>
+<p>Set backend API origin in <code>ui/env.js</code>:</p>
+<pre><code class="language-js">window.GATEHERALD_API_BASE_URL = &#39;https://api.gateherald.example.com&#39;;
+</code></pre>
+<p>Deploy the <code>ui/</code> directory to internal hosting.</p>
+<h2 id="network-and-firewall-policy">Network And Firewall Policy</h2>
+<p>Minimum rules:</p>
+<ol>
+<li>Internal clients -&gt; internal frontend host: allow TCP 443.</li>
+<li>Internal frontend host -&gt; external backend host: allow TCP 443.</li>
+<li>External webhook providers -&gt; backend host: allow TCP 443.</li>
+<li>Backend host -&gt; database: allow only required DB port.</li>
+<li>Deny all other unnecessary inbound/outbound paths.</li>
+</ol>
+<h2 id="tls-and-identity">TLS And Identity</h2>
+<ul>
+<li>Enforce HTTPS everywhere.</li>
+<li>Use valid certificates on both frontend and backend hosts.</li>
+<li>Prefer SSO/OIDC in front of internal UI.</li>
+<li>Prefer short-lived tokens over long-lived static secrets.</li>
+</ul>
+<h2 id="operational-hardening-checklist">Operational Hardening Checklist</h2>
+<ul>
+<li>Keep <code>ALLOWED_ORIGINS</code> minimal and environment-specific.</li>
+<li>Store secrets in environment/secret manager, not source control.</li>
+<li>Enable ingress/egress log retention and monitoring.</li>
+<li>Add rate limiting/WAF in front of public backend where possible.</li>
+<li>Regularly patch host OS and Node dependencies.</li>
+</ul>
+</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
