@@ -145,6 +145,8 @@ const shouldProtectWithFrontendSession = (requestPath) => {
     || requestPath.startsWith('/api/configs');
 };
 
+const isPublicUiAssetPath = (requestPath) => requestPath.startsWith('/ui/dist/');
+
 const frontendSessionAuthMiddleware = (req, res, next) => {
   if (!serveUi || !frontendAuthEnabled) {
     next();
@@ -154,6 +156,7 @@ const frontendSessionAuthMiddleware = (req, res, next) => {
   if (
     req.path === '/auth/login'
     || req.path === '/auth/logout'
+    || isPublicUiAssetPath(req.path)
     || req.path.startsWith(webhookPathPrefix)
     || !shouldProtectWithFrontendSession(req.path)
   ) {

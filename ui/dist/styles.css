@@ -211,6 +211,9 @@
   }
 }
 @layer utilities {
+  .visible {
+    visibility: visible;
+  }
   .relative {
     position: relative;
   }
@@ -246,6 +249,9 @@
   }
   .block {
     display: block;
+  }
+  .contents {
+    display: contents;
   }
   .hidden {
     display: none;
@@ -318,6 +324,18 @@
     @media (width >= 48rem) {
       margin-left: 288px;
     }
+  }
+  .auth-shell {
+    max-width: var(--container-3xl);
+    @media (width >= 48rem) {
+      margin-right: auto;
+    }
+    @media (width >= 48rem) {
+      margin-left: auto;
+    }
+  }
+  .auth-hero {
+    max-width: var(--container-3xl);
   }
   .app-shell button {
     cursor: pointer;
@@ -471,6 +489,20 @@
     &:hover {
       @media (hover: hover) {
         background-color: var(--color-white);
+      }
+    }
+  }
+  .nav-link-disabled {
+    cursor: not-allowed;
+    opacity: 60%;
+    &:hover {
+      @media (hover: hover) {
+        border-color: #2a2a2a;
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        background-color: #1b1b1b;
       }
     }
   }

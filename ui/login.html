@@ -7,16 +7,23 @@
   <link rel="stylesheet" href="/ui/dist/styles.css" />
 </head>
 <body class="app-body">
-  <main class="app-shell">
+  <main class="app-shell auth-shell">
     <section class="app-brand" aria-label="Gateherald">
       <p class="app-brand-title">Gateherald</p>
       <p class="app-brand-kicker">Webhook Gateway</p>
     </section>
 
+    <nav class="app-nav auth-nav" aria-label="Frontend tools">
+      <span class="nav-link active" aria-current="page">Sign In</span>
+      <span class="nav-link nav-link-disabled" aria-disabled="true">Route Configuration</span>
+      <span class="nav-link nav-link-disabled" aria-disabled="true">Templates</span>
+      <a href="https://tcurrent.github.io/gateherald/" class="nav-link" target="_blank" rel="noopener noreferrer">Docs</a>
+    </nav>
+
     <section class="section-card auth-card">
       <div class="section-header">
         <span>
-          <span class="section-header-label">Sign In</span>
+          <span class="section-header-label">Account Access</span>
           <span class="section-header-copy">Authenticate to access the frontend tools.</span>
         </span>
       </div>

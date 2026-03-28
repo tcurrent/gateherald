@@ -20,6 +20,14 @@
     @apply mx-auto grid max-w-6xl grid-cols-1 gap-3 md:ml-[288px] md:mr-6;
   }
 
+  .auth-shell {
+    @apply max-w-3xl md:ml-auto md:mr-auto;
+  }
+
+  .auth-hero {
+    @apply max-w-3xl;
+  }
+
   .app-shell button {
     @apply cursor-pointer;
   }
@@ -62,6 +70,10 @@
 
   .nav-link.active {
     @apply border-accent bg-accent text-zinc-950 hover:bg-white;
+  }
+
+  .nav-link-disabled {
+    @apply cursor-not-allowed opacity-60 hover:border-line hover:bg-fog;
   }
 
   .hero-card {
