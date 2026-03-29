@@ -14,6 +14,7 @@ const outputStylesPath = path.join(outputDir, 'ui', 'dist', 'styles.css');
 const preferredOrder = [
   'index',
   'getting-started',
+  'ui-guide',
   'api-reference',
   'split-host-deployment',
   'docker',
@@ -23,6 +24,7 @@ const preferredOrder = [
 ];
 
 const titleOverrides = {
+  'ui-guide': 'UI Guide',
   'api-reference': 'API Reference',
   'split-host-deployment': 'Split-Host Deployment',
   'docker': 'Docker Deployment',

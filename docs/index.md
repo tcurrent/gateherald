@@ -29,6 +29,7 @@ It includes:
 ## Documentation Map
 
 - [Getting Started](getting-started.md)
+- [UI Guide](ui-guide.md)
 - [API Reference](api-reference.md)
 - [Split-Host Deployment](split-host-deployment.md)
 - [Docker Deployment](docker.md)
