@@ -22,13 +22,22 @@ const preferredOrder = [
   'troubleshooting'
 ];
 
-const titleFromSlug = (slug) => slug
-  === 'index'
-    ? 'Overview'
-    : slug
-  .split('-')
-  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-  .join(' ');
+const titleOverrides = {
+  'api-reference': 'API Reference',
+  'split-host-deployment': 'Split-Host Deployment',
+  'docker': 'Docker Deployment',
+  'nginx': 'Nginx, Auth & Hardening',
+  'database-production': 'Database In Production'
+};
+
+const titleFromSlug = (slug) => {
+  if (slug === 'index') return 'Overview';
+  if (titleOverrides[slug]) return titleOverrides[slug];
+  return slug
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+};
 
 const escapeHtml = (value) => value
   .replaceAll('&', '&amp;')

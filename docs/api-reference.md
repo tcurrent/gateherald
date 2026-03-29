@@ -42,4 +42,28 @@ If you run the app directly in local development (no reverse proxy header inject
 
 - `ALL /webhook/*`
 
-Configured paths can include multiple segments (for example `/webhook/sample/01J0Z8X3GWBD9117Q9H4M2KCFP`).
+Configured paths must start with `/webhook/`. Typical format used by the UI:
+
+```text
+/webhook/{routeName}/{ULID}
+```
+
+Multiple path segments are supported (for example `/webhook/sample/01J0Z8X3GWBD9117Q9H4M2KCFP`).
+
+## Data Model
+
+Primary tables:
+- `ingress`
+- `egress`
+- `templates`
+- `route_configs`
+
+Default local database file: `gateherald.db`
+
+## Migration And Seeding Behavior
+
+On app startup:
+1. Migration scripts run.
+2. Previously applied migrations are skipped using an internal script-run tracking table.
+3. Templates and route configs are loaded into runtime memory.
+4. Route config validation runs before server start.

@@ -45,10 +45,12 @@ When `FRONTEND_ONLY_API=true`, external callers should only reach `/webhook/*`. 
 
 For detailed Basic Auth/OIDC cutover and hardening guidance, see `docs/nginx.md`.
 
-## Deployment Flow
+## Single Nginx Host
+
+Use `deploy/nginx/gateherald.conf` when the UI and backend run on the same host, with nginx in front:
 
 1. Run backend in API-only mode (`SERVE_UI=false`).
-2. Deploy static UI files from `ui/` to `/var/www/gateherald-ui` on your internal proxy host.
+2. Deploy static UI files from `ui/` to `/var/www/gateherald-ui` on the same host.
 3. Install `deploy/nginx/gateherald.conf` as your site config.
 4. Copy the active auth snippet to `/etc/nginx/snippets/gateherald-admin-auth.conf`.
 5. Replace `replace_me_with_admin_proxy_shared_secret` in admin API locations with the exact `ADMIN_PROXY_SHARED_SECRET` value.
@@ -71,7 +73,7 @@ Use `deploy/nginx/gateherald-split-hosts.conf` when UI and API/webhook are on di
 
 Rollout checklist:
 
-1. Set backend to API-only mode (`SERVE_UI=false`).
+1. Set backend to API-only mode (`SERVE_UI=false` in `.env.production` on the backend host).
 2. Deploy UI files to internal host (`/var/www/gateherald-ui`).
 3. Apply the internal server block from `deploy/nginx/gateherald-split-hosts.conf` on internal Nginx.
 4. Apply the external server block from `deploy/nginx/gateherald-split-hosts.conf` on external Nginx.

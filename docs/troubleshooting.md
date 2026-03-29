@@ -166,7 +166,7 @@ npm run db:seed
 
 **Problem**: All data (routes, templates, logs) has been deleted.
 
-**Severity**: **CRITICAL** — Data loss has occurred.
+**Severity**: **CRITICAL** - Data loss has occurred.
 
 **Recovery**:
 1. **Immediately stop the application** to prevent further writes.
@@ -580,7 +580,7 @@ npm run db:seed
 
 **Problem**: Modified a template in the UI, but old transformations still happen.
 
-**Root Cause**: Same as routes — templates may be cached.
+**Root Cause**: Same as routes - templates may be cached.
 
 **Solution**:
 1. **Restart the app** to reload all templates:

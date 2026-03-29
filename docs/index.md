@@ -32,6 +32,6 @@ It includes:
 - [API Reference](api-reference.md)
 - [Split-Host Deployment](split-host-deployment.md)
 - [Docker Deployment](docker.md)
-- [Nginx Config Notes](nginx.md)
+- [Nginx, Auth & Hardening](nginx.md)
 - [Database In Production](database-production.md)
 - [Troubleshooting](troubleshooting.md)
