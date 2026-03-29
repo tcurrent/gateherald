@@ -33,18 +33,15 @@
 <li>Incoming webhook hits a configured route (<code>/webhook/{name}/{ULID}</code>).</li>
 <li>Route config selects a template and field mapping rules.</li>
 <li><code>TemplateDriver</code> transforms inbound payload into egress payload.</li>
-<li>App immediately responds to sender.</li>
-<li>Forwarding to target URLs happens asynchronously.</li>
+<li>App responds immediately; target forwarding happens asynchronously.</li>
 <li>Ingress and egress events are logged to the database.</li>
 </ol>
 <h2 id="features">Features</h2>
 <ul>
 <li>Database-backed route configs and templates</li>
-<li>Template-aware mapping validation</li>
-<li>Documentation rules for template fields that require them</li>
+<li>Automatic documentation URL injection via configurable match rules</li>
 <li>Ingress path discovery from sample payloads</li>
 <li>Multi-target forwarding with per-route headers</li>
-<li>CRUD APIs for templates and route configs</li>
 <li>Browser UI for managing templates and configs</li>
 </ul>
 <h2 id="documentation-map">Documentation Map</h2>
