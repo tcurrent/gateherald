@@ -14,7 +14,7 @@
     </section>
 
     <nav class="app-nav" aria-label="Docs Sections">
-      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link active" href="api-reference.html">Api Reference</a><a class="nav-link " href="split-host-deployment.html">Split Host Deployment</a><a class="nav-link " href="docker.html">Docker</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link active" href="api-reference.html">API Reference</a><a class="nav-link " href="split-host-deployment.html">Split-Host Deployment</a><a class="nav-link " href="docker.html">Docker Deployment</a><a class="nav-link " href="nginx.html">Nginx, Auth &amp; Hardening</a><a class="nav-link " href="database-production.html">Database In Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
       <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
     </nav>
 
@@ -63,7 +63,27 @@
 <ul>
 <li><code>ALL /webhook/*</code></li>
 </ul>
-<p>Configured paths can include multiple segments (for example <code>/webhook/sample/01J0Z8X3GWBD9117Q9H4M2KCFP</code>).</p>
+<p>Configured paths must start with <code>/webhook/</code>. Typical format used by the UI:</p>
+<pre><code class="language-text">/webhook/{routeName}/{ULID}
+</code></pre>
+<p>Multiple path segments are supported (for example <code>/webhook/sample/01J0Z8X3GWBD9117Q9H4M2KCFP</code>).</p>
+<h2 id="data-model">Data Model</h2>
+<p>Primary tables:</p>
+<ul>
+<li><code>ingress</code></li>
+<li><code>egress</code></li>
+<li><code>templates</code></li>
+<li><code>route_configs</code></li>
+</ul>
+<p>Default local database file: <code>gateherald.db</code></p>
+<h2 id="migration-and-seeding-behavior">Migration And Seeding Behavior</h2>
+<p>On app startup:</p>
+<ol>
+<li>Migration scripts run.</li>
+<li>Previously applied migrations are skipped using an internal script-run tracking table.</li>
+<li>Templates and route configs are loaded into runtime memory.</li>
+<li>Route config validation runs before server start.</li>
+</ol>
 </div>
       </div>
     </section>

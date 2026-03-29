@@ -14,7 +14,7 @@
     </section>
 
     <nav class="app-nav" aria-label="Docs Sections">
-      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link " href="split-host-deployment.html">Split Host Deployment</a><a class="nav-link active" href="docker.html">Docker</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">API Reference</a><a class="nav-link " href="split-host-deployment.html">Split-Host Deployment</a><a class="nav-link active" href="docker.html">Docker Deployment</a><a class="nav-link " href="nginx.html">Nginx, Auth &amp; Hardening</a><a class="nav-link " href="database-production.html">Database In Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
       <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
     </nav>
 
@@ -24,8 +24,8 @@
 <h2 id="architecture">Architecture</h2>
 <p>Two containers share an internal Docker bridge network:</p>
 <ul>
-<li><strong><code>backend</code></strong> — Node.js app in API-only mode (<code>SERVE_UI=false</code>, <code>FRONTEND_ONLY_API=true</code>). Publishes port 3000 for external webhook ingress.</li>
-<li><strong><code>frontend</code></strong> — nginx serving the static UI and proxying admin API requests to the backend over the internal network. No published port for the backend API means direct external access to <code>/api/*</code> is blocked at the network level.</li>
+<li><strong><code>backend</code></strong> Node.js app in API-only mode (<code>SERVE_UI=false</code>, <code>FRONTEND_ONLY_API=true</code>). Publishes port 3000 for external webhook ingress.</li>
+<li><strong><code>frontend</code></strong> nginx serving the static UI and proxying admin API requests to the backend over the internal network. No published port for the backend API means direct external access to <code>/api/*</code> is blocked at the network level.</li>
 </ul>
 <p>Traffic flow:</p>
 <ul>
@@ -35,19 +35,19 @@
 <h2 id="files-to-create">Files To Create</h2>
 <p>The following files are referenced throughout these steps:</p>
 <ul>
-<li><code>Dockerfile</code> — backend container image</li>
-<li><code>docker-compose.yml</code> — service definitions</li>
-<li><code>deploy/docker/nginx.conf</code> — nginx config for the frontend container</li>
-<li><code>.dockerignore</code> — excludes <code>.env.*</code> files, the database, and other unnecessary paths from the build context so secrets are not baked into the image</li>
+<li><code>Dockerfile</code> backend container image</li>
+<li><code>docker-compose.yml</code> service definitions</li>
+<li><code>deploy/docker/nginx.conf</code> nginx config for the frontend container</li>
+<li><code>.dockerignore</code> excludes <code>.env.*</code> files, the database, and other unnecessary paths from the build context so secrets are not baked into the image</li>
 </ul>
 <p>All are included in the repo under their respective paths.</p>
-<h2 id="step-1--build-the-ui-css">Step 1 — Build The UI CSS</h2>
+<h2 id="step-1-build-the-ui-css">Step 1) Build The UI CSS</h2>
 <p>The frontend container serves static files. Build the CSS before starting the stack:</p>
 <pre><code class="language-bash">npm install
 npm run build:css
 </code></pre>
 <p>This outputs <code>ui/dist/styles.css</code>, which the nginx container will serve directly.</p>
-<h2 id="step-2--configure-the-nginx-auth-snippet">Step 2 — Configure The nginx Auth Snippet</h2>
+<h2 id="step-2-configure-the-nginx-auth-snippet">Step 2) Configure The nginx Auth Snippet</h2>
 <p>The frontend nginx config includes an auth snippet at <code>/etc/nginx/snippets/gateherald-admin-auth.conf</code>, mounted from <code>deploy/nginx/snippets/</code>. Choose one:</p>
 <ul>
 <li><strong>Basic Auth</strong>: copy <code>gateherald-admin-auth-basic.conf</code> → <code>gateherald-admin-auth.conf</code></li>
@@ -59,15 +59,15 @@ npm run build:css
 <pre><code class="language-bash">htpasswd -c deploy/docker/.htpasswd-gateherald &lt;username&gt;
 </code></pre>
 <p>The <code>docker-compose.yml</code> mounts this file into the frontend container at <code>/etc/nginx/.htpasswd-gateherald</code>.</p>
-<h2 id="step-3--set-the-shared-secret">Step 3 — Set The Shared Secret</h2>
+<h2 id="step-3-set-the-shared-secret">Step 3) Set The Shared Secret</h2>
 <p><code>ADMIN_PROXY_SHARED_SECRET</code> is the shared credential between the nginx frontend and the Node backend. The frontend injects it as a request header; the backend verifies it before accepting any admin API call.</p>
 <p>Generate a strong random value:</p>
 <pre><code class="language-bash">node -e &quot;console.log(require(&#39;crypto&#39;).randomBytes(32).toString(&#39;hex&#39;))&quot;
 </code></pre>
 <p>Set <code>ADMIN_PROXY_SHARED_SECRET</code> to this value in your <code>.env.production</code> file (see Step 4). That is the only place it needs to go.</p>
-<p><code>deploy/docker/nginx.conf</code> uses <code>${ADMIN_PROXY_SHARED_SECRET}</code> as a placeholder. At startup, the nginx container reads the value from the environment and substitutes it before the config is loaded — the secret is never written into any file in the repository.</p>
+<p><code>deploy/docker/nginx.conf</code> uses <code>${ADMIN_PROXY_SHARED_SECRET}</code> as a placeholder. At startup, the nginx container reads the value from the environment and substitutes it before the config is loaded; the secret is never written into any file in the repository.</p>
 <p>The frontend nginx container only receives <code>ADMIN_PROXY_SHARED_SECRET</code> from the environment. Other backend secrets (<code>DB_PASSWORD</code>, <code>API_TOKEN</code>, etc.) are passed only to the backend service via <code>env_file: .env.production</code> and are not exposed to the nginx container.</p>
-<h2 id="step-4--configure-backend-environment">Step 4 — Configure Backend Environment</h2>
+<h2 id="step-4-configure-backend-environment">Step 4) Configure Backend Environment</h2>
 <p>Create a <code>.env.production</code> file in the project root (or pass variables directly to Compose). A minimal production config:</p>
 <pre><code class="language-env">NODE_ENV=production
 PORT=3000
@@ -78,11 +78,11 @@ ADMIN_PROXY_SHARED_SECRET=&lt;value from step 3&gt;
 </code></pre>
 <p>Set <code>ALLOWED_ORIGINS</code> to the external URL where the frontend nginx is reachable. This controls CORS for browser-initiated API requests.</p>
 <p>For SQLite the default database location is used; it will be persisted via the named volume defined in <code>docker-compose.yml</code>. If using Postgres or MySQL instead, add the <code>DATABASE_URL</code> / <code>DB_*</code> vars from <code>.env.production.example</code>.</p>
-<h2 id="step-5--run-migrations">Step 5 — Run Migrations</h2>
+<h2 id="step-5-run-migrations">Step 5) Run Migrations</h2>
 <p>Run database migrations once before starting the app for the first time, or after any upgrade that includes new migrations:</p>
 <pre><code class="language-bash">docker compose run --rm backend node scripts/db-migrate.js
 </code></pre>
-<h2 id="step-6--start-the-stack">Step 6 — Start The Stack</h2>
+<h2 id="step-6-start-the-stack">Step 6) Start The Stack</h2>
 <pre><code class="language-bash">docker compose up -d
 </code></pre>
 <ul>
@@ -92,12 +92,12 @@ ADMIN_PROXY_SHARED_SECRET=&lt;value from step 3&gt;
 <p>To follow logs:</p>
 <pre><code class="language-bash">docker compose logs -f
 </code></pre>
-<h2 id="step-7--tls">Step 7 — TLS</h2>
+<h2 id="step-7-tls">Step 7) TLS</h2>
 <p>The <code>docker-compose.yml</code> exposes the frontend on HTTP port 8080. For HTTPS, put a TLS-terminating reverse proxy (another nginx, Caddy, Traefik, etc.) in front of port 8080 and set the appropriate <code>X-Forwarded-Proto</code> header. The app already reads this header for cookie <code>Secure</code> flag decisions.</p>
-<p>Do not expose the backend container&#39;s port 3000 through TLS termination intended for admin users — keep that path for webhook ingress only.</p>
-<h2 id="optional--postgresmysql-database-container">Optional — Postgres/MySQL Database Container</h2>
+<p>Do not expose the backend container&#39;s port 3000 through TLS termination intended for admin users; keep that path for webhook ingress only.</p>
+<h2 id="optional---postgresmysql-database-container">Optional - Postgres/MySQL Database Container</h2>
 <p>By default the backend uses SQLite, persisted via a named Docker volume. This is sufficient for a single-node deployment. If you want a proper relational database with concurrent write support and a fully independent data lifecycle, add a <code>db</code> service to the Compose stack.</p>
-<h3 id="1--install-the-driver">1 — Install The Driver</h3>
+<h3 id="1-install-the-driver">1) Install The Driver</h3>
 <p>The Postgres or MySQL driver must be present in the image. Add it as a production dependency before building:</p>
 <pre><code class="language-bash"># Postgres
 npm install pg pg-hstore
@@ -105,10 +105,10 @@ npm install pg pg-hstore
 # MySQL
 npm install mysql2
 </code></pre>
-<h3 id="2--add-the-db-service-to-docker-composeyml">2 — Add The db Service To docker-compose.yml</h3>
+<h3 id="2-add-the-db-service-to-docker-composeyml">2) Add The db Service To docker-compose.yml</h3>
 <p>Add a <code>db</code> service on the same internal network, with its own named volume. Update <code>backend</code> to depend on it:</p>
 <pre><code class="language-yaml">volumes:
-  gateherald-data:     # remove or repurpose — no longer used for SQLite
+  gateherald-data:     # remove or repurpose; no longer used for SQLite
   gateherald-db:       # postgres data directory
 
 services:
@@ -123,7 +123,7 @@ services:
     volumes:
       - gateherald-db:/var/lib/postgresql/data
     restart: unless-stopped
-    # No &#39;ports&#39; — not reachable from outside Docker
+    # No &#39;ports&#39; - not reachable from outside Docker
 
   backend:
     build: .
@@ -137,7 +137,7 @@ services:
     restart: unless-stopped
 </code></pre>
 <p>Do not publish the <code>db</code> container&#39;s port. It only needs to be reachable from <code>backend</code> on the internal network.</p>
-<h3 id="3--update-backend-environment">3 — Update Backend Environment</h3>
+<h3 id="3-update-backend-environment">3) Update Backend Environment</h3>
 <p>Remove the SQLite volume mount from <code>backend</code> and add database connection vars to <code>.env.production</code>:</p>
 <pre><code class="language-env">DB_DIALECT=postgres
 DB_HOST=db
@@ -148,7 +148,7 @@ DB_PASSWORD=&lt;strong password&gt;
 DB_SSL=false
 </code></pre>
 <p><code>DB_HOST=db</code> resolves to the <code>db</code> container via Docker&#39;s internal DNS. <code>DB_SSL=false</code> is appropriate here because the connection stays on the internal bridge network; enable it if your setup routes through a TLS-capable proxy.</p>
-<h3 id="4--run-migrations">4 — Run Migrations</h3>
+<h3 id="4-run-migrations">4) Run Migrations</h3>
 <p>Wait for Postgres to be ready before migrating. A simple one-off approach:</p>
 <pre><code class="language-bash">docker compose up -d db
 # wait a few seconds for Postgres to initialise, then:

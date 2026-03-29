@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nginx Config Notes | Gateherald Docs</title>
+  <title>Nginx, Auth &amp; Hardening | Gateherald Docs</title>
   <link rel="stylesheet" href="ui/dist/styles.css">
 </head>
 <body class="app-body">
@@ -14,33 +14,89 @@
     </section>
 
     <nav class="app-nav" aria-label="Docs Sections">
-      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link " href="split-host-deployment.html">Split Host Deployment</a><a class="nav-link " href="docker.html">Docker</a><a class="nav-link active" href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">API Reference</a><a class="nav-link " href="split-host-deployment.html">Split-Host Deployment</a><a class="nav-link " href="docker.html">Docker Deployment</a><a class="nav-link active" href="nginx.html">Nginx, Auth &amp; Hardening</a><a class="nav-link " href="database-production.html">Database In Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
       <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
     </nav>
 
     <section class="section-card" aria-live="polite">
       <div class="section-body docs-section-body">
-        <div class="markdown-content"><h1 id="nginx-config-notes">Nginx Config Notes</h1>
+        <div class="markdown-content"><h1 id="nginx-auth--hardening">Nginx, Auth &amp; Hardening</h1>
 <h2 id="oidc-cutover-guidelines">OIDC Cutover Guidelines</h2>
-<p>Use these steps to switch from Basic Auth to OIDC without changing protected route definitions.</p>
-<ol>
-<li>Keep location blocks unchanged and only swap the auth include target content:<ul>
-<li>From: <code>deploy/nginx/snippets/gateherald-admin-auth-basic.conf</code></li>
-<li>To: <code>deploy/nginx/snippets/gateherald-admin-auth-oidc.conf</code></li>
+<p>OIDC auth is handled by <a href="https://oauth2-proxy.github.io/oauth2-proxy/">oauth2-proxy</a> running alongside nginx. The nginx OIDC snippet uses nginx&#39;s <code>auth_request</code> module to delegate every protected request to oauth2-proxy before serving it. If oauth2-proxy says the user is not authenticated, nginx redirects to the IdP login page. The user logs in on the IdP&#39;s own site (not on the app&#39;s login page) and is redirected back once authenticated.</p>
+<p>Note: the app has a separate built-in <code>FRONTEND_AUTH_ENABLED</code> basic login flow. That is independent of OIDC. When using OIDC, leave <code>FRONTEND_AUTH_ENABLED=false</code> (the default); there is no need for both.</p>
+<h3 id="1-activate-the-oidc-auth-snippet">1) Activate The OIDC Auth Snippet</h3>
+<p>Copy the OIDC snippet over the active auth file:</p>
+<pre><code class="language-bash">cp deploy/nginx/snippets/gateherald-admin-auth-oidc.conf \
+   deploy/nginx/snippets/gateherald-admin-auth.conf
+</code></pre>
+<p>All protected location blocks already include this file and require no changes. The snippet swaps <code>auth_basic</code> for <code>auth_request /oauth2/auth</code>, which routes every protected request through oauth2-proxy.</p>
+<h3 id="2-uncomment-the-oauth2-location-block">2) Uncomment The <code>/oauth2/</code> Location Block</h3>
+<p>In your nginx config (bare-metal: <code>deploy/nginx/gateherald.conf</code> or <code>gateherald-split-hosts.conf</code> internal host; Docker: <code>deploy/docker/nginx.conf</code>), uncomment the oauth2-proxy location:</p>
+<pre><code class="language-nginx">location ^~ /oauth2/ {
+  proxy_pass http://127.0.0.1:4180;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Scheme $scheme;
+}
+</code></pre>
+<h3 id="3-configure-and-run-oauth2-proxy">3) Configure And Run oauth2-proxy</h3>
+<p>oauth2-proxy must be reachable at <code>127.0.0.1:4180</code> on the same host as nginx (or adjust the <code>proxy_pass</code> address to match). The <code>--upstream=static://202</code> flag means oauth2-proxy only performs auth. It does not proxy the traffic itself (nginx handles that).</p>
+<p>Generic OIDC provider:</p>
+<pre><code class="language-bash">oauth2-proxy \
+  --provider=oidc \
+  --oidc-issuer-url=https://your-idp.example.com \
+  --client-id=&lt;client id&gt; \
+  --client-secret=&lt;client secret&gt; \
+  --redirect-url=https://gateherald.internal/oauth2/callback \
+  --email-domain=yourdomain.com \
+  --cookie-secret=&lt;32-byte random value&gt; \
+  --upstream=static://202 \
+  --http-address=127.0.0.1:4180
+</code></pre>
+<p>Generate a cookie secret:</p>
+<pre><code class="language-bash">node -e &quot;console.log(require(&#39;crypto&#39;).randomBytes(32).toString(&#39;base64&#39;))&quot;
+</code></pre>
+<h4 id="microsoft-entra-azure-ad">Microsoft Entra (Azure AD)</h4>
+<pre><code class="language-bash">oauth2-proxy \
+  --provider=oidc \
+  --oidc-issuer-url=https://login.microsoftonline.com/&lt;tenant-id&gt;/v2.0 \
+  --client-id=&lt;app registration client id&gt; \
+  --client-secret=&lt;app registration client secret&gt; \
+  --redirect-url=https://gateherald.internal/oauth2/callback \
+  --email-domain=yourdomain.com \
+  --cookie-secret=&lt;32-byte random value&gt; \
+  --upstream=static://202 \
+  --http-address=127.0.0.1:4180
+</code></pre>
+<p>Entra-specific setup:</p>
+<ul>
+<li>Create an app registration in Entra ID.</li>
+<li>Set the redirect URI to <code>https://gateherald.internal/oauth2/callback</code> under &quot;Authentication&quot;.</li>
+<li>Generate a client secret under &quot;Certificates &amp; secrets&quot;.</li>
+<li><code>--email-domain</code> restricts login to users from your org&#39;s domain. Set to <code>*</code> to allow any authenticated Entra user.</li>
+<li>To restrict access to a specific Entra group, add <code>--allowed-group=&lt;group object ID&gt;</code> and grant the app registration <code>GroupMember.Read.All</code> permission (or configure the token to include group claims).</li>
 </ul>
-</li>
-<li>Enable <code>/oauth2/*</code> location on the internal UI host and route it to oauth2-proxy.</li>
-<li>Configure oauth2-proxy with your IdP issuer URL, client ID/secret, redirect URL, and session cookie settings.</li>
-<li>Keep external host restrictions in place (CIDR allowlist or stronger network controls). OIDC on internal host does not replace edge network restrictions.</li>
-<li>Verify behavior:<ul>
-<li>Unauthenticated requests to <code>/ui/*</code> and admin APIs redirect to IdP.</li>
-<li>Authenticated user can load UI and perform template/config CRUD.</li>
-<li><code>/webhook/*</code> remains publicly reachable.</li>
+<h3 id="4-reload-nginx">4) Reload Nginx</h3>
+<pre><code class="language-bash"># bare-metal
+nginx -s reload
+
+# Docker
+docker compose restart frontend
+</code></pre>
+<h3 id="5-verify">5) Verify</h3>
+<ul>
+<li>Unauthenticated requests to <code>/ui/*</code> and admin APIs should redirect to the IdP login page.</li>
+<li>Authenticated user can load the UI and perform template/config CRUD.</li>
+<li><code>/webhook/*</code> remains publicly reachable without auth.</li>
 <li>Admin APIs are unreachable from non-internal networks.</li>
 </ul>
-</li>
-<li>Rotate/remove Basic Auth credentials (<code>/etc/nginx/.htpasswd-gateherald</code>) after successful cutover.</li>
-</ol>
+<h3 id="6-clean-up-basic-auth">6) Clean Up Basic Auth</h3>
+<p>Once verified, remove the htpasswd file:</p>
+<pre><code class="language-bash">rm deploy/nginx/.htpasswd-gateherald   # adjust path to your setup
+</code></pre>
+<h3 id="notes-on-the-oidc-snippet">Notes On The OIDC Snippet</h3>
+<p><code>deploy/nginx/snippets/gateherald-admin-auth-oidc.conf</code> forwards <code>X-Forwarded-User</code> and <code>X-Forwarded-Email</code> headers from oauth2-proxy to the upstream backend. The app does not currently consume these headers, but they will be present on proxied requests. Audit them before relying on them for any downstream logic.</p>
+<p>Keep external host restrictions (CIDR allowlist or network controls) in place even after enabling OIDC. OIDC on the internal/frontend host does not replace edge network restrictions on the backend host.</p>
 <h2 id="recommended-post-cutover-hardening">Recommended Post-Cutover Hardening</h2>
 <ul>
 <li>Restrict OIDC access by IdP group/role.</li>

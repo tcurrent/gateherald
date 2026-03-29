@@ -14,7 +14,7 @@
     </section>
 
     <nav class="app-nav" aria-label="Docs Sections">
-      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link " href="split-host-deployment.html">Split Host Deployment</a><a class="nav-link " href="docker.html">Docker</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link active" href="troubleshooting.html">Troubleshooting</a>
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">API Reference</a><a class="nav-link " href="split-host-deployment.html">Split-Host Deployment</a><a class="nav-link " href="docker.html">Docker Deployment</a><a class="nav-link " href="nginx.html">Nginx, Auth &amp; Hardening</a><a class="nav-link " href="database-production.html">Database In Production</a><a class="nav-link active" href="troubleshooting.html">Troubleshooting</a>
       <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
     </nav>
 
@@ -162,7 +162,7 @@ npm run db:seed
 <hr>
 <h3 id="accidentally-ran-npm-run-dbreset-in-production">Accidentally Ran <code>npm run db:reset</code> in Production</h3>
 <p><strong>Problem</strong>: All data (routes, templates, logs) has been deleted.</p>
-<p><strong>Severity</strong>: <strong>CRITICAL</strong> — Data loss has occurred.</p>
+<p><strong>Severity</strong>: <strong>CRITICAL</strong> - Data loss has occurred.</p>
 <p><strong>Recovery</strong>:</p>
 <ol>
 <li><strong>Immediately stop the application</strong> to prevent further writes.</li>
@@ -549,7 +549,7 @@ npm start
 <hr>
 <h3 id="template-changes-dont-take-effect">Template Changes Don&#39;t Take Effect</h3>
 <p><strong>Problem</strong>: Modified a template in the UI, but old transformations still happen.</p>
-<p><strong>Root Cause</strong>: Same as routes — templates may be cached.</p>
+<p><strong>Root Cause</strong>: Same as routes - templates may be cached.</p>
 <p><strong>Solution</strong>:</p>
 <ol>
 <li><p><strong>Restart the app</strong> to reload all templates:</p>

@@ -14,7 +14,7 @@
     </section>
 
     <nav class="app-nav" aria-label="Docs Sections">
-      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">Api Reference</a><a class="nav-link active" href="split-host-deployment.html">Split Host Deployment</a><a class="nav-link " href="docker.html">Docker</a><a class="nav-link " href="nginx.html">Nginx</a><a class="nav-link " href="database-production.html">Database Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link " href="api-reference.html">API Reference</a><a class="nav-link active" href="split-host-deployment.html">Split-Host Deployment</a><a class="nav-link " href="docker.html">Docker Deployment</a><a class="nav-link " href="nginx.html">Nginx, Auth &amp; Hardening</a><a class="nav-link " href="database-production.html">Database In Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
       <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
     </nav>
 
@@ -59,10 +59,11 @@ PORT=3000
 </ul>
 <p>When <code>FRONTEND_ONLY_API=true</code>, external callers should only reach <code>/webhook/*</code>. Route <code>/api/*</code> traffic should be internal-proxy-only.</p>
 <p>For detailed Basic Auth/OIDC cutover and hardening guidance, see <code>docs/nginx.md</code>.</p>
-<h2 id="deployment-flow">Deployment Flow</h2>
+<h2 id="single-nginx-host">Single Nginx Host</h2>
+<p>Use <code>deploy/nginx/gateherald.conf</code> when the UI and backend run on the same host, with nginx in front:</p>
 <ol>
 <li>Run backend in API-only mode (<code>SERVE_UI=false</code>).</li>
-<li>Deploy static UI files from <code>ui/</code> to <code>/var/www/gateherald-ui</code> on your internal proxy host.</li>
+<li>Deploy static UI files from <code>ui/</code> to <code>/var/www/gateherald-ui</code> on the same host.</li>
 <li>Install <code>deploy/nginx/gateherald.conf</code> as your site config.</li>
 <li>Copy the active auth snippet to <code>/etc/nginx/snippets/gateherald-admin-auth.conf</code>.</li>
 <li>Replace <code>replace_me_with_admin_proxy_shared_secret</code> in admin API locations with the exact <code>ADMIN_PROXY_SHARED_SECRET</code> value.</li>
@@ -87,7 +88,7 @@ PORT=3000
 </ul>
 <p>Rollout checklist:</p>
 <ol>
-<li>Set backend to API-only mode (<code>SERVE_UI=false</code>).</li>
+<li>Set backend to API-only mode (<code>SERVE_UI=false</code> in <code>.env.production</code> on the backend host).</li>
 <li>Deploy UI files to internal host (<code>/var/www/gateherald-ui</code>).</li>
 <li>Apply the internal server block from <code>deploy/nginx/gateherald-split-hosts.conf</code> on internal Nginx.</li>
 <li>Apply the external server block from <code>deploy/nginx/gateherald-split-hosts.conf</code> on external Nginx.</li>
