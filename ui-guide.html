@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UI Guide | Gateherald Docs</title>
+  <link rel="stylesheet" href="ui/dist/styles.css">
+</head>
+<body class="app-body">
+  <main class="app-shell">
+    <section class="app-brand" aria-label="Gateherald">
+      <p class="app-brand-title">Gateherald</p>
+      <p class="app-brand-kicker">Docs</p>
+    </section>
+
+    <nav class="app-nav" aria-label="Docs Sections">
+      <a class="nav-link " href="index.html">Overview</a><a class="nav-link " href="getting-started.html">Getting Started</a><a class="nav-link active" href="ui-guide.html">UI Guide</a><a class="nav-link " href="api-reference.html">API Reference</a><a class="nav-link " href="split-host-deployment.html">Split-Host Deployment</a><a class="nav-link " href="docker.html">Docker Deployment</a><a class="nav-link " href="nginx.html">Nginx, Auth &amp; Hardening</a><a class="nav-link " href="database-production.html">Database In Production</a><a class="nav-link " href="troubleshooting.html">Troubleshooting</a>
+      <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
+    </nav>
+
+    <section class="section-card" aria-live="polite">
+      <div class="section-body docs-section-body">
+        <div class="markdown-content"><h1 id="ui-guide">UI Guide</h1>
+<h2 id="signing-in">Signing In</h2>
+<p>The sign-in page only appears when <code>FRONTEND_AUTH_ENABLED=true</code> is set on the backend. If your deployment uses nginx-level auth (Basic Auth or OIDC) instead, you will not see it; access is handled before the page loads.</p>
+<p>When the sign-in page is shown:</p>
+<ol>
+<li>Navigate to <code>/ui/config-builder</code> (or any <code>/ui/*</code> path). You will be redirected to <code>/auth/login</code> if you are not already authenticated.</li>
+<li>Enter the username and password set in <code>FRONTEND_AUTH_USERNAME</code> and <code>FRONTEND_AUTH_PASSWORD</code>.</li>
+<li>Click <strong>Sign In</strong>. On success you are redirected to the original destination. On failure the page shows &quot;Invalid credentials. Try again.&quot;</li>
+</ol>
+<p>To sign out, click the <strong>Logout</strong> button in the top navigation bar. This clears the session cookie.</p>
+<hr>
+<h2 id="template-builder">Template Builder</h2>
+<p>Templates are the egress payload blueprints. Every route config references exactly one template. You must create at least one template before you can build a route config.</p>
+<p>Navigate to <strong>Templates</strong> in the top nav.</p>
+<h3 id="creating-a-template">Creating A Template</h3>
+<ol>
+<li><p>Click <strong>New Template</strong> to clear the form.</p>
+</li>
+<li><p><strong>Template Name</strong> (required): a unique name used to reference the template from route configs. Example: <code>pagerduty-alert</code>.</p>
+</li>
+<li><p><strong>Needs Documentation Rules</strong>: set to <code>true</code> if this template has a field that should be populated with a documentation URL at runtime. When set to <code>true</code>, a <strong>Documentation Target Field</strong> input appears. Defaults to <code>false</code>.</p>
+</li>
+<li><p><strong>Documentation Target Field</strong>: visible only when Needs Documentation Rules is <code>true</code>. Enter the name of the field in the template that will receive the resolved documentation URL. This must match a key in the fields JSON. Example: <code>alertDocumentation</code>.</p>
+</li>
+<li><p><strong>Template Fields (JSON Object)</strong> (required): a JSON object where each key is a field name and each value is the default value for that field. Keys become the editable fields that the config builder will let you map ingress data into.</p>
+<p>Example:</p>
+<pre><code class="language-json">{
+  &quot;alertTitle&quot;: &quot;&quot;,
+  &quot;alertSummary&quot;: &quot;&quot;,
+  &quot;alertDocumentation&quot;: &quot;&quot;
+}
+</code></pre>
+<ul>
+<li>Every key you define here appears as a mappable field in the config builder.</li>
+<li>Values are the defaults; if a route config provides no mapping for a field, this value is used.</li>
+</ul>
+</li>
+<li><p>Click <strong>Save Template</strong>.</p>
+</li>
+</ol>
+<h3 id="editing-a-template">Editing A Template</h3>
+<p>Select a template from the <strong>Saved Templates</strong> dropdown and click <strong>Load Template</strong>. Make changes and click <strong>Save Template</strong>. The page will warn you if you try to navigate away with unsaved changes.</p>
+<h3 id="deleting-a-template">Deleting A Template</h3>
+<p>Load the template, then click <strong>Delete Template</strong>. This is permanent. Route configs referencing a deleted template will fail validation on the next app restart.</p>
+<hr>
+<h2 id="config-builder">Config Builder</h2>
+<p>Route configs define how an inbound webhook gets transformed and forwarded. Navigate to <strong>Route Configuration</strong> in the top nav.</p>
+<h3 id="route-settings">Route Settings</h3>
+<p><strong>Route Name</strong> (required): a human-readable identifier for this route. Used as part of the generated webhook path. Example: <code>github-to-pagerduty</code>.</p>
+<p><strong>Method</strong>: the HTTP method the route accepts. Defaults to <code>POST</code>. Options: <code>POST</code>, <code>PUT</code>, <code>PATCH</code>.</p>
+<p><strong>Route Path</strong>: read-only. Auto-generated as <code>/webhook/{routeName}/{ULID}</code>. The ULID makes the path effectively unguessable. Click <strong>Generate New Route ULID</strong> to regenerate the random suffix if needed.</p>
+<p><strong>Enabled</strong>: when unchecked the route exists in the database but the app will not route incoming requests to it.</p>
+<p><strong>Outbound Headers</strong>: headers added to every forwarded request. Each row has:</p>
+<ul>
+<li><strong>Header name</strong>: the HTTP header name, e.g. <code>X-API-KEY</code>.</li>
+<li><strong>Value type</strong>: <code>Environment Variable</code> or <code>Literal</code>.<ul>
+<li><code>Environment Variable</code>: enter just the variable name, e.g. <code>API_TOKEN</code>. The app resolves it to <code>process.env.API_TOKEN</code> at runtime. Use this for secrets so they are never stored in the database.</li>
+<li><code>Literal</code>: the exact string is stored and sent as-is.</li>
+</ul>
+</li>
+</ul>
+<p><strong>Target URL(s)</strong> (required): one or more URLs the transformed payload is forwarded to. Add multiple targets to fan out a single inbound webhook to several endpoints.</p>
+<h3 id="template-selection">Template Selection</h3>
+<p>Select the template that defines the egress payload structure for this route. Once selected, the <strong>Field Discovery</strong> and <strong>Field Mapping</strong> panels appear. The status line shows the editable fields the template exposes.</p>
+<h3 id="field-discovery">Field Discovery</h3>
+<p>Paste a sample JSON payload from your webhook provider and click <strong>Extract Fields From Sample</strong>. The builder flattens every leaf path in the payload — including nested objects and array items — and stores them as autocomplete suggestions for the mapping step.</p>
+<p>You do not need to extract fields before mapping. It just makes it easier to avoid typos when referencing nested paths.</p>
+<h3 id="field-mapping">Field Mapping</h3>
+<p>One row appears per editable field in the selected template. Each row shows the target field name and a mapping expression input.</p>
+<p><strong>How expressions work:</strong></p>
+<ul>
+<li><code>$path.to.field</code>: resolves the value at that dot-separated path in the inbound payload. <code>$event.title</code> looks up <code>payload.event.title</code>.</li>
+<li>Array indexing uses bracket notation: <code>$items[0].name</code>.</li>
+<li>Everything not preceded by <code>$</code> is literal text. <code>Alert: $event.title</code> → <code>Alert: Server Down</code>.</li>
+<li>Multiple tokens and literals can be mixed: <code>$service.name ($event.severity)</code> → <code>Payments Service (critical)</code>.</li>
+<li>To include a literal dollar sign, write <code>$$</code>.</li>
+<li>If a <code>$path</code> reference does not resolve (key missing or null in the payload), that path contributes nothing to the output. If the entire expression resolves to nothing, the template default value is used.</li>
+</ul>
+<p><strong>Autocomplete:</strong> type <code>$</code> and the builder shows matching paths from the extracted sample. Use arrow keys to navigate, <code>Enter</code> or <code>Tab</code> to accept, <code>Escape</code> to dismiss.</p>
+<p><strong>Preview:</strong> below each input, a rendered preview shows path references as highlighted tokens and literal text as plain text.</p>
+<p><strong>Clear:</strong> removes the mapping for that field, reverting it to the template default at runtime.</p>
+<h3 id="documentation-rules">Documentation Rules</h3>
+<p>This panel only appears when the selected template has <strong>Needs Documentation Rules</strong> set to <code>true</code>.</p>
+<p>Documentation rules automatically populate the template&#39;s documentation target field with a URL based on the resolved value of another field. This is useful for linking alert routes to the relevant runbook or wiki page.</p>
+<p>Each rule has three fields:</p>
+<ul>
+<li><strong>Field to match</strong>: the template field whose resolved value is inspected.</li>
+<li><strong>Match value</strong>: a case-insensitive substring to look for in that field&#39;s resolved value.</li>
+<li><strong>Documentation URL</strong>: the URL written into the documentation target field when the match is found.</li>
+</ul>
+<p>Rules are evaluated in order. The first match wins. If no rule matches, the documentation target field uses its template default.</p>
+<p><strong>Example:</strong> field to match = <code>alertTitle</code>, match value = <code>Server Down</code>, URL = <code>https://wiki.example.com/runbooks/server-down</code>. Any webhook whose <code>alertTitle</code> mapping resolves to a string containing &quot;server down&quot; will have that URL written into the documentation target field of the egress payload.</p>
+<p>Click <strong>Add Documentation Rule</strong> to add a row. Click <strong>Remove</strong> to delete a row.</p>
+<h3 id="saving-a-config">Saving A Config</h3>
+<p>Click <strong>Save Current Config</strong> to persist the route to the database. The app picks up the new config immediately without a restart.</p>
+<p>To preview the raw JSON before saving, click <strong>Generate Config JSON</strong>.</p>
+<h3 id="loading-and-editing-an-existing-config">Loading And Editing An Existing Config</h3>
+<p>Select a config from the <strong>Config Records</strong> dropdown (shown as <code>{path} [{method}]</code>) and click <strong>Load Config</strong>. Edit as needed and click <strong>Save Current Config</strong>.</p>
+<h3 id="deleting-a-config">Deleting A Config</h3>
+<p>Load the config and click <strong>Delete Selected Config</strong>. The route stops accepting webhooks immediately.</p>
+</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
