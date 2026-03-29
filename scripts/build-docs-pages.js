@@ -15,7 +15,8 @@ const preferredOrder = [
   'index',
   'getting-started',
   'api-reference',
-  'deployment',
+  'split-host-deployment',
+  'docker',
   'nginx',
   'database-production',
   'troubleshooting'

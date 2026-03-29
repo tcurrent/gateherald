@@ -1,0 +1,37 @@
+networks:
+  gateherald:
+    driver: bridge
+
+volumes:
+  gateherald-data:
+
+services:
+  backend:
+    build: .
+    env_file: .env.production
+    ports:
+      - "3000:3000"
+    networks:
+      - gateherald
+    volumes:
+      - gateherald-data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:alpine
+    depends_on:
+      - backend
+    networks:
+      - gateherald
+    ports:
+      - "8080:80"
+    environment:
+      ADMIN_PROXY_SHARED_SECRET: "${ADMIN_PROXY_SHARED_SECRET}"
+      # Scope envsubst to only this variable so nginx's own $host, $remote_addr etc. are not touched.
+      NGINX_ENVSUBST_TEMPLATE_VARS: ADMIN_PROXY_SHARED_SECRET
+    volumes:
+      - ./ui:/usr/share/nginx/html:ro
+      - ./deploy/docker/nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./deploy/nginx/snippets/gateherald-admin-auth.conf:/etc/nginx/snippets/gateherald-admin-auth.conf:ro
+      - ./deploy/docker/.htpasswd-gateherald:/etc/nginx/.htpasswd-gateherald:ro
+    restart: unless-stopped

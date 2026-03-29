@@ -1,4 +1,4 @@
-# Deployment 
+# Split-Host Deployment
 
 ## Internal Frontend + External Backend
 

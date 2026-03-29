@@ -30,7 +30,8 @@ It includes:
 
 - [Getting Started](getting-started.md)
 - [API Reference](api-reference.md)
-- [Deployment](deployment.md)
+- [Split-Host Deployment](split-host-deployment.md)
+- [Docker Deployment](docker.md)
 - [Nginx Config Notes](nginx.md)
 - [Database In Production](database-production.md)
 - [Troubleshooting](troubleshooting.md)
