@@ -12,18 +12,15 @@ It includes:
 1. Incoming webhook hits a configured route (`/webhook/{name}/{ULID}`).
 2. Route config selects a template and field mapping rules.
 3. `TemplateDriver` transforms inbound payload into egress payload.
-4. App immediately responds to sender.
-5. Forwarding to target URLs happens asynchronously.
-6. Ingress and egress events are logged to the database.
+4. App responds immediately; target forwarding happens asynchronously.
+5. Ingress and egress events are logged to the database.
 
 ## Features
 
 - Database-backed route configs and templates
-- Template-aware mapping validation
-- Documentation rules for template fields that require them
+- Automatic documentation URL injection via configurable match rules
 - Ingress path discovery from sample payloads
 - Multi-target forwarding with per-route headers
-- CRUD APIs for templates and route configs
 - Browser UI for managing templates and configs
 
 ## Documentation Map
