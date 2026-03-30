@@ -17,7 +17,7 @@
   }
 
   .app-shell {
-    @apply mx-auto grid max-w-6xl grid-cols-1 gap-3 md:ml-[288px] md:mr-6;
+    @apply mx-auto flex flex-col max-w-6xl gap-3 md:ml-[288px] md:mr-6;
   }
 
   .auth-shell {
@@ -304,7 +304,7 @@
   }
 
   .section-card {
-    @apply border border-line bg-elevated shadow-[0_18px_40px_rgba(0,0,0,0.28)];
+    @apply min-w-0 border border-line bg-elevated shadow-[0_18px_40px_rgba(0,0,0,0.28)];
   }
 
   .section-header {
@@ -359,6 +359,15 @@
     @apply text-sm leading-7 text-zinc-200;
   }
 
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4,
+  .markdown-content h5,
+  .markdown-content h6 {
+    scroll-margin-top: 4rem;
+  }
+
   .markdown-content h1 {
     @apply mt-1 mb-4 text-3xl font-black tracking-[-0.03em] text-ink;
   }
@@ -378,6 +387,10 @@
   .markdown-content ul,
   .markdown-content ol {
     @apply my-3 ml-5 grid gap-1;
+  }
+
+  .markdown-content li {
+    min-width: 0;
   }
 
   .markdown-content ul {

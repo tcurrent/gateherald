@@ -315,9 +315,9 @@
   }
   .app-shell {
     margin-inline: auto;
-    display: grid;
+    display: flex;
     max-width: var(--container-6xl);
-    grid-template-columns: repeat(1, minmax(0, 1fr));
+    flex-direction: column;
     gap: calc(var(--spacing) * 3);
     @media (width >= 48rem) {
       margin-right: calc(var(--spacing) * 6);
@@ -1012,6 +1012,7 @@
     gap: calc(var(--spacing) * 3);
   }
   .section-card {
+    min-width: calc(var(--spacing) * 0);
     border-style: var(--tw-border-style);
     border-width: 1px;
     border-color: #2a2a2a;
@@ -1124,6 +1125,14 @@
     line-height: calc(var(--spacing) * 7);
     color: var(--color-zinc-200);
   }
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4,
+  .markdown-content h5,
+  .markdown-content h6 {
+    scroll-margin-top: 4rem;
+  }
   .markdown-content h1 {
     margin-top: calc(var(--spacing) * 1);
     margin-bottom: calc(var(--spacing) * 4);
@@ -1165,6 +1174,9 @@
     margin-left: calc(var(--spacing) * 5);
     display: grid;
     gap: calc(var(--spacing) * 1);
+  }
+  .markdown-content li {
+    min-width: 0;
   }
   .markdown-content ul {
     list-style-type: disc;
