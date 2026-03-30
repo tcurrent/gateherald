@@ -13,7 +13,8 @@
       <p class="app-brand-kicker">Webhook Gateway</p>
     </section>
 
-    <nav class="app-nav">
+    <div class="app-nav-scroller">
+    <nav class="app-nav" id="app-nav">
       <a href="./config-builder.html" class="nav-link">Route Configuration</a>
       <a href="./template-builder.html" class="nav-link active">Templates</a>
       <a href="https://tcurrent.github.io/gateherald/" class="nav-link" target="_blank" rel="noopener noreferrer">Docs</a>
@@ -21,6 +22,7 @@
         <button type="submit" class="nav-link nav-link-btn">Logout</button>
       </form>
     </nav>
+    </div>
 
     <section>
       <h1 class="hero-title">Template Builder</h1>
@@ -83,6 +85,25 @@
       </div>
     </section>
   </main>
+
+  <script>
+    (function () {
+      var nav = document.getElementById('app-nav');
+      var wrapper = nav && nav.parentElement;
+      function checkScroll() {
+        if (!nav || !wrapper) return;
+        var atEnd = nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 4;
+        wrapper.classList.toggle('scrolled-end', atEnd);
+        wrapper.classList.toggle('scrolled-start', nav.scrollLeft > 0);
+      }
+      if (nav) {
+        nav.addEventListener('scroll', checkScroll, { passive: true });
+        var active = nav.querySelector('.nav-link.active');
+        if (active) { active.scrollIntoView({ block: 'nearest', inline: 'center' }); }
+        checkScroll();
+      }
+    }());
+  </script>
 
   <script src="./env.js"></script>
   <script src="./template-builder.js"></script>

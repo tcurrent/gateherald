@@ -13,12 +13,14 @@
       <p class="app-brand-kicker">Webhook Gateway</p>
     </section>
 
-    <nav class="app-nav auth-nav" aria-label="Frontend tools">
+    <div class="app-nav-scroller">
+    <nav class="app-nav auth-nav" id="app-nav" aria-label="Frontend tools">
       <span class="nav-link active" aria-current="page">Sign In</span>
       <span class="nav-link nav-link-disabled" aria-disabled="true">Route Configuration</span>
       <span class="nav-link nav-link-disabled" aria-disabled="true">Templates</span>
       <a href="https://tcurrent.github.io/gateherald/" class="nav-link" target="_blank" rel="noopener noreferrer">Docs</a>
     </nav>
+    </div>
 
     <section class="section-card auth-card">
       <div class="section-header">
@@ -48,6 +50,25 @@
       </div>
     </section>
   </main>
+
+  <script>
+    (function () {
+      var nav = document.getElementById('app-nav');
+      var wrapper = nav && nav.parentElement;
+      function checkScroll() {
+        if (!nav || !wrapper) return;
+        var atEnd = nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 4;
+        wrapper.classList.toggle('scrolled-end', atEnd);
+        wrapper.classList.toggle('scrolled-start', nav.scrollLeft > 0);
+      }
+      if (nav) {
+        nav.addEventListener('scroll', checkScroll, { passive: true });
+        var active = nav.querySelector('.nav-link.active');
+        if (active) { active.scrollIntoView({ block: 'nearest', inline: 'center' }); }
+        checkScroll();
+      }
+    }());
+  </script>
 
   <script>
     const search = new URLSearchParams(window.location.search);

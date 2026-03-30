@@ -129,10 +129,12 @@ const pageTemplate = ({ pageTitle, navItems, activeSlug, contentHtml }) => {
       <p class="app-brand-kicker">Docs</p>
     </section>
 
-    <nav class="app-nav" aria-label="Docs Sections">
+    <div class="app-nav-scroller">
+    <nav class="app-nav" id="docs-nav" aria-label="Docs Sections">
       ${navHtml}
       <a href="https://github.com/tcurrent/gateherald" class="nav-link" target="_blank" rel="noopener noreferrer">Repository</a>
     </nav>
+    </div>
 
     <section class="section-card" aria-live="polite">
       <div class="section-body docs-section-body">
@@ -140,6 +142,26 @@ const pageTemplate = ({ pageTitle, navItems, activeSlug, contentHtml }) => {
       </div>
     </section>
   </main>
+  <script>
+    (function () {
+      var nav = document.getElementById('docs-nav');
+      var wrapper = nav && nav.parentElement;
+      function checkScroll() {
+        if (!nav || !wrapper) return;
+        var atEnd = nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 4;
+        wrapper.classList.toggle('scrolled-end', atEnd);
+        wrapper.classList.toggle('scrolled-start', nav.scrollLeft > 0);
+      }
+      if (nav) {
+        nav.addEventListener('scroll', checkScroll, { passive: true });
+        var active = nav.querySelector('.nav-link.active');
+        if (active) {
+          active.scrollIntoView({ block: 'nearest', inline: 'center' });
+        }
+        checkScroll();
+      }
+    }());
+  </script>
 </body>
 </html>`;
 };
